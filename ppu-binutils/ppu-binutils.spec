@@ -39,7 +39,7 @@ XCFLAGS="$OPT_FLAGS" TCFLAGS="$TARGET_OPT_FLAGS" LDFLAGS= \
     --build=%{_build} \
     --host=%{_host} \
     --target=%{target} \
-    --with_sysroot=/opt/cell/sysroot \
+    --with-sysroot=/opt/cell/sysroot \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \
     --disable-install-libbfd \
