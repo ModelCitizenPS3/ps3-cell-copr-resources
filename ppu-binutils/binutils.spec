@@ -3,15 +3,15 @@
 # When building the cross-toolchain, reset prefix directory and use sysroot
 %define _build_id_links none
 
-%bcond_with ppu
+%bcond_without ppu
 %bcond_with spu
 
-%if %{with ppu} && %{with spu}
-%{error: Cannot specify both --with ppu and --with spu}
-%endif
-%if !%{with ppu} && !%{with spu}
-%{error: Must specify either --with ppu or --with spu}
-%endif
+#%if %%{with ppu} && %%{with spu}
+#%%{error: Cannot specify both --with ppu and --with spu}
+#%%endif
+#%%if !%%{with ppu} && !%%{with spu}
+#%%{error: Must specify either --with ppu or --with spu}
+#%%endif
 
 #%%ifarch ppc64
 #%%if %%{with ppu}
