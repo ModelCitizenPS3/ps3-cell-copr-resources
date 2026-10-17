@@ -74,7 +74,7 @@ rm -rf obj-%{target}
 mkdir -p obj-%{target}
 pushd obj-%{target}
 
-i#%%ifarch ppc64
+#%%ifarch ppc64
 #OPT_FLAGS="-O2 -g -mcpu=cell -mtune=cell"
 #TARGET_OPT_FLAGS="$OPT_FLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 #%%endif
