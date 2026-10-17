@@ -7,7 +7,7 @@
 %define target spu-elf
 
 Name:           spu-binutils
-Version:        2.36.1
+Version:        2.45
 Release:        1%{?dist}
 Summary:        GNU binary utilities for the Cell/B.E. SPU
 License:        GPL
@@ -44,6 +44,7 @@ XCFLAGS="$OPT_FLAGS" TCFLAGS="$TARGET_OPT_FLAGS" LDFLAGS= \
     --mandir=%{_mandir} \
     --infodir=%{_infodir} \
     --with-sysroot=/opt/cell/sysroot \
+    --disable-silent-rules \
     --program-prefix=spu- \
     --disable-shared \
     --enable-64-bit-bfd \
@@ -109,6 +110,6 @@ rm -f %{buildroot}%{_infodir}/dir
 
 
 %changelog
-* Fri Oct 16 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.36.1-1
+* Fri Oct 16 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.45-1
 - Initial build for PS3LINUX on the Cell/B.E. https://ps3linux.net
 

@@ -1,13 +1,11 @@
-# Don't strip as the host binutils may be unable to handle SPU objects.
 %define __os_install_post /usr/lib/rpm/brp-compress
-# When building the cross-toolchain, reset prefix directory and use sysroot
 %define _build_id_links none
 
 %define _prefix /opt/cell/toolchain
 %define target powerpc64-linux-gnu
 
 Name:           ppu-binutils
-Version:        2.36.1
+Version:        2.45
 Release:        1%{?dist}
 Summary:        GNU binary utilities for the Cell/B.E. PPU
 License:        GPL
@@ -31,15 +29,15 @@ pushd build
 OPT_FLAGS="-O2 -g -march=x86-64 -mtune=generic"
 TARGET_OPT_FLAGS="$OPT_FLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 CC="gcc -m64"
-CXX="g++ -m64"
-CC="$CC" CXX="$CXX" \
-CFLAGS="$TARGET_OPT_FLAGS" CXXFLAGS="$TARGET_OPT_FLAGS" \
-XCFLAGS="$OPT_FLAGS" TCFLAGS="$TARGET_OPT_FLAGS" LDFLAGS= \
+#CXX="g++ -m64"
+CC="$CC" \
+CFLAGS="$TARGET_OPT_FLAGS" XCFLAGS="$OPT_FLAGS" TCFLAGS="$TARGET_OPT_FLAGS" LDFLAGS= \
 ../configure \
     --build=%{_build} \
     --host=%{_host} \
     --target=%{target} \
     --with-sysroot=/opt/cell/sysroot \
+    --disable-silent-rules \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \
     --disable-install-libbfd \
@@ -110,6 +108,5 @@ rm -f %{buildroot}%{_infodir}/dir
 
 
 %changelog
-* Fri Oct 16 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.36.1-1
+* Fri Oct 16 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.45-1
 - Initial build for PS3LINUX on the Cell/B.E. https://ps3linux.net
-
