@@ -14,7 +14,7 @@ License:        GPL
 Group:          Cell Development Tools
 Source0:        https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
 
-BuildRequires:  dejagnu, bison, flex, texinfo, gcc
+BuildRequires:  dejagnu, bison, flex, texinfo, gcc, gcc-c++
 
 %description
 The GNU binutils version %{version}.
