@@ -44,7 +44,7 @@ XCFLAGS="$OPT_FLAGS" TCFLAGS="$TARGET_OPT_FLAGS" LDFLAGS= \
     --libdir=%{_libdir} \
     --disable-install-libbfd \
     --enable-targets=spu \
-    --program-prefix=ppu-- \
+    --program-prefix=ppu- \
     --disable-shared \
     --enable-64-bit-bfd \
     --disable-nls \
