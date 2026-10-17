@@ -13,21 +13,21 @@
 %{error: Must specify either --with ppu or --with spu}
 %endif
 
-%ifarch ppc64
-%if %{with ppu}
-%define package_prefix ppu
-%define target powerpc64-linux-gnu
-%define configuration --enable-install-libbfd --target=%{target} --enable-targets=spu
-%endif
-%if %{with spu}
-%define package_prefix spu
-%define target spu-elf
-%define _libdir %{_prefix}/lib
-%define configuration --target=%{target}
-%endif
-%endif
+#%%ifarch ppc64
+#%%if %%{with ppu}
+#%%define package_prefix ppu
+#%%define target powerpc64-linux-gnu
+#%%define configuration --enable-install-libbfd --target=%%{target} --enable-targets=spu
+#%%endif
+#%%if %%{with spu}
+#%%define package_prefix spu
+#%%define target spu-elf
+#%%define _libdir %%{_prefix}/lib
+#%%define configuration --target=%%{target}
+#%%endif
+#%%endif
 
-%ifarch x86_64
+#%%ifarch x86_64
 %define _prefix /opt/cell/toolchain
 %define _mandir %{_prefix}/man
 %define _infodir %{_prefix}/info
@@ -43,7 +43,7 @@
 %define _libdir %{_prefix}/lib
 %define configuration --target=%{target}
 %endif
-%endif
+#%%endif
 
 Name:           %{package_prefix}-binutils
 Version:        2.36.1
@@ -57,7 +57,7 @@ Summary:        GNU binary utilities for the Cell/B.E. SPU
 License:        GPL
 Group:          Cell Development Tools
 Source0:        https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
-ExclusiveArch:  ppc64 x86_64
+#ExclusiveArch:  ppc64 x86_64
 
 BuildRequires:  dejagnu, bison, flex, texinfo, gcc
 
@@ -74,14 +74,14 @@ rm -rf obj-%{target}
 mkdir -p obj-%{target}
 pushd obj-%{target}
 
-%ifarch ppc64
-OPT_FLAGS="-O2 -g -mcpu=cell -mtune=cell"
-TARGET_OPT_FLAGS="$OPT_FLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-%endif
-%ifarch x86_64
+i#%%ifarch ppc64
+#OPT_FLAGS="-O2 -g -mcpu=cell -mtune=cell"
+#TARGET_OPT_FLAGS="$OPT_FLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+#%%endif
+#%%ifarch x86_64
 OPT_FLAGS="-O2 -g -march=x86-64 -mtune=generic"
 TARGET_OPT_FLAGS="$OPT_FLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-%endif
+#%%endif
 CC="gcc -m64"
 CXX="g++ -m64"
 CC="$CC" CXX="$CXX" \
@@ -159,24 +159,24 @@ rm -f %{buildroot}%{_infodir}/dir
 %{_mandir}/man1/%{package_prefix}-elfedit.1*
 %dir %{_libdir}/bfd-plugins
 %{_libdir}/bfd-plugins/libdep.a
-%ifarch ppc64
-%if %{with ppu}
-%{_prefix}/include/ansidecl.h
-%{_prefix}/include/bfd.h
-%{_prefix}/include/bfd_stdint.h
-%{_prefix}/include/bfdlink.h
-%{_prefix}/include/ctf-api.h
-%{_prefix}/include/ctf.h
-%{_prefix}/include/diagnostics.h
-%{_prefix}/include/dis-asm.h
-%{_prefix}/include/plugin-api.h
-%{_prefix}/include/symcat.h
-%{_libdir}/libbfd.a
-%{_libdir}/libctf-nobfd.a
-%{_libdir}/libctf.a
-%{_libdir}/libopcodes.a
-%endif
-%endif
+#%%ifarch ppc64
+#%%if %%{with ppu}
+#%%{_prefix}/include/ansidecl.h
+#%%{_prefix}/include/bfd.h
+#%%{_prefix}/include/bfd_stdint.h
+#%%{_prefix}/include/bfdlink.h
+#%%{_prefix}/include/ctf-api.h
+#%%{_prefix}/include/ctf.h
+#%%{_prefix}/include/diagnostics.h
+#%%{_prefix}/include/dis-asm.h
+#%%{_prefix}/include/plugin-api.h
+#%%{_prefix}/include/symcat.h
+#%%{_libdir}/libbfd.a
+#%%{_libdir}/libctf-nobfd.a
+#%%{_libdir}/libctf.a
+#%%{_libdir}/libopcodes.a
+#%%endif
+#%%endif
 
 
 %changelog
