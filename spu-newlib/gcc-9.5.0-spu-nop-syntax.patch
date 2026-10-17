@@ -1,0 +1,21 @@
+diff -Naur a/gcc/config/spu/spu.md b/gcc/config/spu/spu.md
+--- a/gcc/config/spu/spu.md	2022-05-27 03:21:11.075380133 -0400
++++ b/gcc/config/spu/spu.md	2026-10-14 23:25:37.925790239 -0400
+@@ -4437,7 +4437,7 @@
+ (define_insn "nopn"
+   [(unspec_volatile [(match_operand:SI 0 "immediate_operand" "K")] UNSPECV_NOP)]
+   ""
+-  "nop\t%0"
++  "nop"
+   [(set_attr "type" "nop")])
+ 
+ (define_insn "lnop"
+@@ -4460,7 +4460,7 @@
+ (define_insn "nopn_nv"
+   [(unspec [(match_operand:SI 0 "register_operand" "r")] UNSPEC_NOP)]
+   ""
+-  "nop\t%0"
++  "nop"
+   [(set_attr "type" "nop")])
+ 
+ (define_insn "hbr"
