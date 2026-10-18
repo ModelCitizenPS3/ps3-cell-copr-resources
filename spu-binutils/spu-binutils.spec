@@ -1,115 +1,131 @@
 # Don't strip as the host binutils may be unable to handle SPU objects.
 %define __os_install_post /usr/lib/rpm/brp-compress
-%define _build_id_links none
 
-%define _prefix /opt/cell/toolchain
-%define _libdir %{_prefix}/lib
-%define target spu-elf
+%define package_prefix spu
 
-Name:           spu-binutils
-Version:        2.45
-Release:        1%{?dist}
-Summary:        GNU binary utilities for the Cell/B.E. SPU
-License:        GPL
-Group:          Cell Development Tools
-Source0:        https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
+Summary: GNU binary utilities for the Cell/B.E. SPU
+Name: %{package_prefix}-binutils
+Version: 2.33.1
+Release: 1.CELL
+License: GPL
+Group: Cell Development Tools
+Source0: https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
 
-BuildRequires:  dejagnu, bison, flex, texinfo, gcc, gcc-c++
+BuildRequires: gcc, gcc-c++, cpp, gmp-devel, make
+BuildRequires: mpfr-devel, libmpc-devel, isl-devel
+BuildRequires: dejagnu, bison, flex, texinfo, bc
+Requires: gmp, mpfr, libmpc, isl
 
 %description
 The GNU binutils version %{version}.
 
 
+# When building the cross-toolchain, reset prefix directory and use sysroot
+%define _prefix /opt/cell/toolchain
+%define _mandir %{_prefix}/man
+%define _infodir %{_prefix}/info
+%define with_sysroot --with-sysroot=/opt/cell/sysroot
+
 %prep
-%setup -q -n binutils-%{version}
+%setup -c -q
 
 
 %build
-mkdir -p build
-pushd build
+%define configuration --target=spu
+%define target_platform spu
 
-OPT_FLAGS="-O2 -g -march=x86-64 -mtune=generic"
-TARGET_OPT_FLAGS="$OPT_FLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-CC="gcc -m64"
-CXX="g++ -m64"
-CC="$CC" CXX="$CXX" \
-CFLAGS="$TARGET_OPT_FLAGS" CXXFLAGS="$TARGET_OPT_FLAGS" \
-XCFLAGS="$OPT_FLAGS" TCFLAGS="$TARGET_OPT_FLAGS" LDFLAGS= \
-../configure \
-    --build=%{_build} \
-    --host=%{_host} \
-    --target=%{target} \
+rm -fr obj-%{target_platform}
+mkdir obj-%{target_platform}
+pushd obj-%{target_platform}
+
+unset CC CXX CFLAGS CXXFLAGS FCFLAGS FFLAGS LDFLAGS
+unset CFLAGS_FOR_TARGET CXXFLAGS_FOR_TARGET FCFLAGS_FOR_TARGET FFLAGS_FOR_TARGET
+AR=/usr/bin/ar \
+AS=/usr/bin/as \
+LD=/usr/bin/ld \
+NM=/usr/bin/nm \
+RANLIB=/usr/bin/ranlib \
+CFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+CXXFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+../binutils-%{version}/configure \
     --prefix=%{_prefix} \
-    --libdir=%{_libdir} \
+    --libdir=%{_prefix}/lib \
     --mandir=%{_mandir} \
     --infodir=%{_infodir} \
-    --with-sysroot=/opt/cell/sysroot \
-    --disable-silent-rules \
-    --program-prefix=spu- \
-    --disable-shared \
-    --enable-64-bit-bfd \
+    %{?with_sysroot} \
+    %{configuration} \
+    --program-prefix=%{package_prefix}- \
+	--disable-shared \
     --disable-nls \
-    --disable-werror
+    --disable-werror \
+    --enable-64-bit-bfd
+make %{?_smp_mflags}
 popd
-make -C build %{?_smp_mflags}
 
 
 %check
 
 
 %install
-rm -rf %{buildroot}
-make -C build DESTDIR=%{buildroot} -j1 install
+rm -fr %{buildroot}
 
-find %{buildroot}%{_libdir} -name *.la -delete
-rm -f %{buildroot}%{_mandir}/man1/spu-{dlltool,nlmconv,windres,windmc}*
+pushd obj-%{target_platform}
+TARGET_PLATFORM=%{target_platform}
+make DESTDIR=%{buildroot} -j1 install
+popd
+
+rm -f %{buildroot}%{_mandir}/man1/%{package_prefix}-{dlltool,nlmconv,windres,windmc}*
 rm -rf %{buildroot}%{_infodir}
-rm -f %{buildroot}%{_infodir}/dir
+rm -rf %{buildroot}%{_mandir}/man7
+
+cd ..
 
 
 %files
 %defattr(-,root,root)
-%{_bindir}/spu-addr2line
-%{_bindir}/spu-ar
-%{_bindir}/spu-as
-%{_bindir}/spu-c++filt
-%{_bindir}/spu-ld
-%{_bindir}/spu-nm
-%{_bindir}/spu-objcopy
-%{_bindir}/spu-objdump
-%{_bindir}/spu-ranlib
-%{_bindir}/spu-readelf
-%{_bindir}/spu-size
-%{_bindir}/spu-strings
-%{_bindir}/spu-strip
-%{_bindir}/spu-gprof
-%{_bindir}/spu-elfedit
-%{_bindir}/spu-ld.bfd
-%dir %{_prefix}/%{target}
-%dir %{_prefix}/%{target}/bin
-%dir %{_prefix}/%{target}/lib
-%{_prefix}/%{target}/bin/*
-%{_prefix}/%{target}/lib/ldscripts
-%{_mandir}/man1/spu-addr2line.1*
-%{_mandir}/man1/spu-ar.1*
-%{_mandir}/man1/spu-as.1*
-%{_mandir}/man1/spu-c++filt.1*
-%{_mandir}/man1/spu-ld.1*
-%{_mandir}/man1/spu-nm.1*
-%{_mandir}/man1/spu-objcopy.1*
-%{_mandir}/man1/spu-objdump.1*
-%{_mandir}/man1/spu-ranlib.1*
-%{_mandir}/man1/spu-readelf.1*
-%{_mandir}/man1/spu-size.1*
-%{_mandir}/man1/spu-strings.1*
-%{_mandir}/man1/spu-strip.1*
-%{_mandir}/man1/spu-gprof.1*
+%dir %{_prefix}
+%dir %{_prefix}/bin
+%dir %{_mandir}
+%dir %{_mandir}/man1
+%{_prefix}/bin/%{package_prefix}-addr2line
+%{_prefix}/bin/%{package_prefix}-ar
+%{_prefix}/bin/%{package_prefix}-as
+%{_prefix}/bin/%{package_prefix}-c++filt
+%{_prefix}/bin/%{package_prefix}-ld
+%{_prefix}/bin/%{package_prefix}-nm
+%{_prefix}/bin/%{package_prefix}-objcopy
+%{_prefix}/bin/%{package_prefix}-objdump
+%{_prefix}/bin/%{package_prefix}-ranlib
+%{_prefix}/bin/%{package_prefix}-readelf
+%{_prefix}/bin/%{package_prefix}-size
+%{_prefix}/bin/%{package_prefix}-strings
+%{_prefix}/bin/%{package_prefix}-strip
+%{_prefix}/bin/%{package_prefix}-gprof
+%{_prefix}/bin/spu-elfedit
+%{_prefix}/bin/spu-ld.bfd
+%dir %{_prefix}/%{target_platform}
+%dir %{_prefix}/%{target_platform}/bin
+%dir %{_prefix}/%{target_platform}/lib
+%{_prefix}/%{target_platform}/bin/*
+%{_prefix}/%{target_platform}/lib/ldscripts
+%{_mandir}/man1/%{package_prefix}-addr2line.1*
+%{_mandir}/man1/%{package_prefix}-ar.1*
+%{_mandir}/man1/%{package_prefix}-as.1*
+%{_mandir}/man1/%{package_prefix}-c++filt.1*
+%{_mandir}/man1/%{package_prefix}-ld.1*
+%{_mandir}/man1/%{package_prefix}-nm.1*
+%{_mandir}/man1/%{package_prefix}-objcopy.1*
+%{_mandir}/man1/%{package_prefix}-objdump.1*
+%{_mandir}/man1/%{package_prefix}-ranlib.1*
+%{_mandir}/man1/%{package_prefix}-readelf.1*
+%{_mandir}/man1/%{package_prefix}-size.1*
+%{_mandir}/man1/%{package_prefix}-strings.1*
+%{_mandir}/man1/%{package_prefix}-strip.1*
+%{_mandir}/man1/%{package_prefix}-gprof.1*
 %{_mandir}/man1/spu-elfedit.1*
-%dir %{_libdir}/bfd-plugins
-%{_libdir}/bfd-plugins/libdep.a
 
 
 %changelog
-* Fri Oct 16 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.45-1
-- Initial build for PS3LINUX on the Cell/B.E. https://ps3linux.net
+* Sat Oct 17 2026 The Model Citizen <model.citizen.ps3@gmail.com>  2.33.1-1
+- Initial build - https://ps3linux.net
 
