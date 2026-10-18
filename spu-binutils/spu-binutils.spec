@@ -3,18 +3,19 @@
 
 %define package_prefix spu
 
-Summary: GNU binary utilities for the Cell/B.E. SPU
-Name: %{package_prefix}-binutils
-Version: 2.33.1
-Release: 1.CELL
-License: GPL
-Group: Cell Development Tools
-Source0: https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
+Summary:        GNU binary utilities for the Cell/B.E. SPU
+Name:           %{package_prefix}-binutils
+Version:        2.32
+Release:        1.CELL
+License:        GPL
+Group:          Cell Development Tools
+Source0:        https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
+ExclusiveArch:  ppc64 x86_64
 
-BuildRequires: gcc, gcc-c++, cpp, gmp-devel, make
-BuildRequires: mpfr-devel, libmpc-devel, isl-devel
-BuildRequires: dejagnu, bison, flex, texinfo, bc
-Requires: gmp, mpfr, libmpc, isl
+BuildRequires:  gcc, gcc-c++, cpp, gmp-devel, make
+BuildRequires:  mpfr-devel, libmpc-devel, isl-devel
+BuildRequires:  dejagnu, bison, flex, texinfo, bc, cpp
+Requires:       gmp, mpfr, libmpc, isl
 
 %description
 The GNU binutils version %{version}.
@@ -22,45 +23,46 @@ The GNU binutils version %{version}.
 
 # When building the cross-toolchain, reset prefix directory and use sysroot
 %define _prefix /opt/cell/toolchain
+%define _libdir /opt/cell/toolchain/lib
 %define _mandir %{_prefix}/man
 %define _infodir %{_prefix}/info
-%define with_sysroot --with-sysroot=/opt/cell/sysroot
 
 %prep
 %setup -c -q
 
 
 %build
-%define configuration --target=spu
 %define target_platform spu
 
-rm -fr obj-%{target_platform}
-mkdir obj-%{target_platform}
-pushd obj-%{target_platform}
+rm -fr build
+mkdir build
+cd build
 
-unset CC CXX CFLAGS CXXFLAGS FCFLAGS FFLAGS LDFLAGS
-unset CFLAGS_FOR_TARGET CXXFLAGS_FOR_TARGET FCFLAGS_FOR_TARGET FFLAGS_FOR_TARGET
-AR=/usr/bin/ar \
-AS=/usr/bin/as \
-LD=/usr/bin/ld \
-NM=/usr/bin/nm \
-RANLIB=/usr/bin/ranlib \
-CFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
-CXXFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+#unset CC CXX CFLAGS CXXFLAGS FCFLAGS FFLAGS LDFLAGS
+#unset CFLAGS_FOR_TARGET CXXFLAGS_FOR_TARGET FCFLAGS_FOR_TARGET FFLAGS_FOR_TARGET
+#AR=/usr/bin/ar \
+#AS=/usr/bin/as \
+#LD=/usr/bin/ld \
+#NM=/usr/bin/nm \
+#RANLIB=/usr/bin/ranlib \
+#CFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+#CXXFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
 ../binutils-%{version}/configure \
     --prefix=%{_prefix} \
-    --libdir=%{_prefix}/lib \
+    --libdir=%{_libdir} \
     --mandir=%{_mandir} \
     --infodir=%{_infodir} \
-    %{?with_sysroot} \
-    %{configuration} \
+	--build=`gcc -dumpmachine` \
+    --host=`gcc -dumpmachine` \
+    --target=spu \
+    --with-sysroot=/opt/cell/sysroot \
     --program-prefix=%{package_prefix}- \
-	--disable-shared \
+    --with-lib-path=/opt/cell/toolchain/lib \
     --disable-nls \
     --disable-werror \
     --enable-64-bit-bfd
 make %{?_smp_mflags}
-popd
+cd ../
 
 
 %check
@@ -69,10 +71,9 @@ popd
 %install
 rm -fr %{buildroot}
 
-pushd obj-%{target_platform}
-TARGET_PLATFORM=%{target_platform}
+cd build
 make DESTDIR=%{buildroot} -j1 install
-popd
+cd ../
 
 rm -f %{buildroot}%{_mandir}/man1/%{package_prefix}-{dlltool,nlmconv,windres,windmc}*
 rm -rf %{buildroot}%{_infodir}
