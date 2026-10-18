@@ -1,112 +1,135 @@
+%define package_prefix ppu
+# Don't strip as the host binutils may be unable to handle SPU objects.
 %define __os_install_post /usr/lib/rpm/brp-compress
-%define _build_id_links none
 
-%define _prefix /opt/cell/toolchain
-%define target powerpc64-linux-gnu
+%bcond_with ppc64
 
-Name:           ppu-binutils
-Version:        2.45
-Release:        1%{?dist}
-Summary:        GNU binary utilities for the Cell/B.E. PPU
-License:        GPL
-Group:          Cell Development Tools
-Source0:        https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
+Summary: GNU binary utilities for the Cell/B.E. PPU
+Name: %{package_prefix}-binutils
+Version: 2.33.1
+Release: 1.CELL
+License: GPL
+Group: Cell Development Tools
+Source0: https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
+ExclusiveArch: ppc64 x86_64
 
-BuildRequires:  dejagnu, bison, flex, texinfo, gcc, gcc-c++
+BuildRequires: dejagnu, bison, flex, texinfo, bc
+BuildRequires: gcc, cpp, binutils, gcc-c++, make
 
 %description
 The GNU binutils version %{version}.
 
+# When building the cross-toolchain, reset prefix directory and use sysroot
+%define _prefix /opt/cell/toolchain
+%define _mandir %{_prefix}/man
+%define _infodir %{_prefix}/info
+%define with_sysroot --with-sysroot=/opt/cell/sysroot
+
 
 %prep
-%setup -q -n binutils-%{version}
+%setup -c -q
 
 
 %build
-mkdir -p build
-pushd build
+%define configuration --disable-install-libbfd --target=powerpc64-linux --enable-targets=spu
+%define target_platform powerpc64-linux
 
-OPT_FLAGS="-O2 -g -march=x86-64 -mtune=generic"
+OPT_FLAGS="-O2 -g -march=x86_64 -mtune=generic -m64"
 TARGET_OPT_FLAGS="$OPT_FLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-CC="gcc -m64"
-#CXX="g++ -m64"
-CC="$CC" \
-CFLAGS="$TARGET_OPT_FLAGS" XCFLAGS="$OPT_FLAGS" TCFLAGS="$TARGET_OPT_FLAGS" LDFLAGS= \
-../configure \
-    --build=%{_build} \
-    --host=%{_host} \
-    --target=%{target} \
-    --with-sysroot=/opt/cell/sysroot \
-    --disable-silent-rules \
+CC="gcc"
+
+rm -fr obj-%{target_platform}
+mkdir obj-%{target_platform}
+
+pushd obj-%{target_platform}
+unset CC CXX CFLAGS CXXFLAGS FCFLAGS FFLAGS LDFLAGS
+unset CFLAGS_FOR_TARGET CXXFLAGS_FOR_TARGET FCFLAGS_FOR_TARGET FFLAGS_FOR_TARGET
+AR=/usr/bin/ar \
+AS=/usr/bin/as \
+LD=/usr/bin/ld \
+NM=/usr/bin/nm \
+RANLIB=/usr/bin/ranlib \
+CFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+CXXFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+../binutils-%{version}/configure \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \
-    --disable-install-libbfd \
-    --enable-targets=spu \
-    --program-prefix=ppu- \
-    --disable-shared \
-    --enable-64-bit-bfd \
+    --mandir=%{_mandir}  \
+    --infodir=%{_infodir} \
+	--build=`gcc -dumpmachine` \
+    --host=`gcc -dumpmachine` \
+    %{with_sysroot} \
+    %{configuration} \
+    --program-prefix=%{package_prefix}- \
+	--disable-shared \
     --disable-nls \
-    --disable-werror
+    --disable-werror \
+    --enable-64-bit-bfd
+make %{?_smp_mflags} -j1
 popd
-make -C build %{?_smp_mflags}
 
 
 %check
 
 
 %install
-rm -rf %{buildroot}
-make -C build DESTDIR=%{buildroot} -j1 install
-
-find %{buildroot}%{_libdir} -name *.la -delete
-rm -f %{buildroot}%{_mandir}/man1/ppu-{dlltool,nlmconv,windres,windmc}*
+rm -fr %{buildroot}
+pushd obj-%{target_platform}
+TARGET_PLATFORM=%{target_platform}
+make DESTDIR=%{buildroot} -j1 install
+popd
+rm -f %{buildroot}%{_mandir}/man1/%{package_prefix}-{dlltool,nlmconv,windres,windmc}*
 rm -rf %{buildroot}%{_infodir}
-rm -f %{buildroot}%{_infodir}/dir
+rm -rf %{buildroot}%{_mandir}/man7
+cd ../
 
 
 %files
 %defattr(-,root,root)
-%{_bindir}/ppu-addr2line
-%{_bindir}/ppu-ar
-%{_bindir}/ppu-as
-%{_bindir}/ppu-c++filt
-%{_bindir}/ppu-ld
-%{_bindir}/ppu-nm
-%{_bindir}/ppu-objcopy
-%{_bindir}/ppu-objdump
-%{_bindir}/ppu-ranlib
-%{_bindir}/ppu-readelf
-%{_bindir}/ppu-size
-%{_bindir}/ppu-strings
-%{_bindir}/ppu-strip
-%{_bindir}/ppu-gprof
-%{_bindir}/ppu-elfedit
-%{_bindir}/ppu-ld.bfd
-%{_bindir}/ppu-embedspu
-%dir %{_prefix}/%{target}
-%dir %{_prefix}/%{target}/bin
-%dir %{_prefix}/%{target}/lib
-%{_prefix}/%{target}/bin/*
-%{_prefix}/%{target}/lib/ldscripts
-%{_mandir}/man1/ppu-addr2line.1*
-%{_mandir}/man1/ppu-ar.1*
-%{_mandir}/man1/ppu-as.1*
-%{_mandir}/man1/ppu-c++filt.1*
-%{_mandir}/man1/ppu-ld.1*
-%{_mandir}/man1/ppu-nm.1*
-%{_mandir}/man1/ppu-objcopy.1*
-%{_mandir}/man1/ppu-objdump.1*
-%{_mandir}/man1/ppu-ranlib.1*
-%{_mandir}/man1/ppu-readelf.1*
-%{_mandir}/man1/ppu-size.1*
-%{_mandir}/man1/ppu-strings.1*
-%{_mandir}/man1/ppu-strip.1*
-%{_mandir}/man1/ppu-gprof.1*
-%{_mandir}/man1/ppu-elfedit.1*
-%dir %{_libdir}/bfd-plugins
-%{_libdir}/bfd-plugins/libdep.a
+%dir %{_prefix}
+%dir %{_prefix}/bin
+%dir %{_mandir}
+%dir %{_mandir}/man1
+%{_prefix}/bin/%{package_prefix}-addr2line
+%{_prefix}/bin/%{package_prefix}-ar
+%{_prefix}/bin/%{package_prefix}-as
+%{_prefix}/bin/%{package_prefix}-c++filt
+%{_prefix}/bin/%{package_prefix}-ld
+%{_prefix}/bin/%{package_prefix}-nm
+%{_prefix}/bin/%{package_prefix}-objcopy
+%{_prefix}/bin/%{package_prefix}-objdump
+%{_prefix}/bin/%{package_prefix}-ranlib
+%{_prefix}/bin/%{package_prefix}-readelf
+%{_prefix}/bin/%{package_prefix}-size
+%{_prefix}/bin/%{package_prefix}-strings
+%{_prefix}/bin/%{package_prefix}-strip
+%{_prefix}/bin/%{package_prefix}-gprof
+%{_prefix}/bin/%{package_prefix}-embedspu
+%{_prefix}/bin/ppu-elfedit
+%{_prefix}/bin/ppu-ld.bfd
+%dir %{_prefix}/%{target_platform}
+%dir %{_prefix}/%{target_platform}/bin
+%dir %{_prefix}/%{target_platform}/lib
+%{_prefix}/%{target_platform}/bin/*
+%{_prefix}/%{target_platform}/lib/ldscripts
+%{_mandir}/man1/%{package_prefix}-addr2line.1*
+%{_mandir}/man1/%{package_prefix}-ar.1*
+%{_mandir}/man1/%{package_prefix}-as.1*
+%{_mandir}/man1/%{package_prefix}-c++filt.1*
+%{_mandir}/man1/%{package_prefix}-ld.1*
+%{_mandir}/man1/%{package_prefix}-nm.1*
+%{_mandir}/man1/%{package_prefix}-objcopy.1*
+%{_mandir}/man1/%{package_prefix}-objdump.1*
+%{_mandir}/man1/%{package_prefix}-ranlib.1*
+%{_mandir}/man1/%{package_prefix}-readelf.1*
+%{_mandir}/man1/%{package_prefix}-size.1*
+%{_mandir}/man1/%{package_prefix}-strings.1*
+%{_mandir}/man1/%{package_prefix}-strip.1*
+%{_mandir}/man1/%{package_prefix}-gprof.1*
+%{_prefix}/man/man1/ppu-elfedit.1*
 
 
 %changelog
-* Fri Oct 16 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.45-1
-- Initial build for PS3LINUX on the Cell/B.E. https://ps3linux.net
+* Sat Oct 17 2026  The Model Citizen  <model.citizen.ps3@gmail.com>  2.33.1-1
+- Initial build  - https://ps3linux.net
+
