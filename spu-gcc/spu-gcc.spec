@@ -13,7 +13,7 @@ Summary:        GNU Compiler Collection for Cell Broadband Engine SPU
 License:        GPL
 Group:          Cell Development Tools
 Source0:        https://ftp.gnu.org/gnu/gcc/gcc-%{version}/gcc-%{version}.tar.xz
-Source1:        ftp://sourceware.org/pub/newlib/newlib-2.5.0.tar.gz
+Source1:        https://sourceware.org/pub/newlib/newlib-2.5.0.tar.gz
 Source2:        gcc-9.5.0-format-security-syntax-fix.patch
 ExclusiveArch:  ppc64 x86_64
 
@@ -22,8 +22,6 @@ BuildRequires:  gcc, gcc-c++, binutils, cpp, gmp-devel, mpfr-devel, libmpc-devel
 BuildRequires:  %{package_prefix}-binutils
 Requires:       %{package_prefix}-binutils
 Requires:       gmp, mpfr, libmpc, isl
-#BuildRequires: spu-newlib
-#Requires: spu-newlib
 AutoProv:       no
 AutoReq:        no
 
@@ -45,30 +43,6 @@ AutoReq:    yes
 
 %description -n %{package_prefix}-gcc-c++
 GNU Compiler Collection C++ compiler for Cell Broadband Engine.
-
-%if 0
-%package -n %{package_prefix}-gcc-fortran
-Summary:    Fortran support for %{package_prefix}-gcc
-Group:      Cell Development Tools
-Requires:   %{package_prefix}-gcc = %{version}-%{release}
-AutoProv:   no
-AutoReq:    yes
-
-%description -n %{package_prefix}-gcc-fortran
-GNU Compiler Collection Fortran compiler for Cell Broadband Engine.
-%endif
-
-%if 0
-%package -n %{package_prefix}-gcc-testsuite
-Summary:    DejaGnu testsuite for %{package_prefix}-gcc
-Group:      Cell Development Tools
-Requires:   %{package_prefix}-gcc = %{version}-%{release}, dejagnu
-AutoProv:   no
-AutoReq:    no
-
-%description -n %{package_prefix}-gcc-testsuite
-Testsuite driver for the Cell Broadband Engine version of GCC.
-%endif
 
 
 %prep
@@ -181,67 +155,6 @@ exec %{_prefix}/bin/%{package_prefix}-gcc $fl ${1+"$@"}
 EOF
 chmod 755 $RPM_BUILD_ROOT%{_prefix}/bin/%{package_prefix}-c?9
 
-# Disable for now
-%if 0
-%define builddir $RPM_BUILD_DIR/%{package_prefix}-gcc-%{version}/toolchain/gcc
-%define testdir $RPM_BUILD_ROOT%{_prefix}/share/%{package_prefix}-gcc-testsuite
-%define baseboards $RPM_BUILD_ROOT/usr/share/dejagnu/baseboards
-
-mkdir -p $RPM_BUILD_ROOT%{_prefix}/share
-cp -R %{builddir}/gcc/testsuite %{testdir}
-install -m 755 %{builddir}/contrib/test_installed %{testdir}
-
-install -d -m 755 %{baseboards}
-install -m 644 %{builddir}/contrib/cell-native.exp %{baseboards}/%{package_prefix}-gcc-native.exp
-install -m 644 %{builddir}/contrib/cell-remote.exp %{baseboards}/%{package_prefix}-gcc-remote.exp
-
-cat > $RPM_BUILD_ROOT%{_prefix}/bin/%{package_prefix}-gcc-runtests <<"EOF"
-#!/bin/sh
-function usage { echo "Usage: $0 native | remote <hostname>"; exit 1; }
-test $# -eq 0 && usage
-%ifarch ppc ppc64
-test $1 = native -o \( $1 = remote -a $# = 2 \) || usage
-test $1 = remote && export GCC_TARGET_HOSTNAME=$2
-if [ $1 = native ] ;
-then
-%if %{with ppu}
-  board=unix/-m32;
-%else
-  board=%{package_prefix}-gcc-native;
-%endif
-else
-  board=%{package_prefix}-gcc-remote;
-fi
-%else
-test $1 = native -o $1 = localhost && usage
-export GDB_TARGET_HOSTNAME=$1
-board=%{package_prefix}-gcc-remote
-%endif
-%{_prefix}/share/%{package_prefix}-gcc-testsuite/test_installed \
-  --with-testsuite=%{_prefix}/share/%{package_prefix}-gcc-testsuite \
-  --with-gcc=%{_prefix}/bin/%{package_prefix}-gcc \
-  --with-g++=%{_prefix}/bin/%{package_prefix}-g++ \
-  --with-gfortran=%{_prefix}/bin/%{package_prefix}-gfortran \
-  --without-objc \
-%if %{with spu}
-  --target spu-unknown-elf \
-%endif
-  --target_board $board
-%if %{with ppu}
-test $1 = native && unset GCC_TARGET_HOSTNAME
-export TARGET_GNATMAKE=%{_prefix}/bin/ppu-gnatmake
-export TARGET_GNATCHOP=%{_prefix}/bin/ppu-gnatchop
-export HOST_GNATMAKE=%{_prefix}/bin/ppu-gnatmake
-export HOST_GNATCHOP=%{_prefix}/bin/ppu-gnatchop
-export HOST_GNATLS=%{_prefix}/bin/ppu-gnatls
-export GCC_DRIVER=%{_prefix}/bin/ppu-gcc GCC=%{_prefix}/bin/ppu-gcc
-export testdir=%{_prefix}/share/%{package_prefix}-gcc-testsuite/ada/acats
-%{_prefix}/share/%{package_prefix}-gcc-testsuite/ada/acats/run_all.sh
-%endif
-EOF
-chmod 755 $RPM_BUILD_ROOT%{_prefix}/bin/%{package_prefix}-gcc-runtests
-%endif
-
 rm -rf $RPM_BUILD_ROOT%{_infodir}
 rm -rf $RPM_BUILD_ROOT%{_mandir}/man7
 rm -f %{buildroot}%{_prefix}/bin/spu-gcc-{ar,nm,ranlib}
@@ -347,43 +260,6 @@ rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 %{_prefix}/lib/gcc/%{target_platform}/%{version}/libsupc++.a
 %dir %{_prefix}/lib/gcc/%{target_platform}/%{version}/mea64
 %{_prefix}/lib/gcc/%{target_platform}/%{version}/mea64/libsupc++.a
-
-%if 0
-%files -n %{package_prefix}-gcc-fortran
-%defattr(-,root,root)
-%dir %{_prefix}
-%dir %{_prefix}/bin
-%dir %{_mandir}
-%dir %{_mandir}/man1
-%{_prefix}/bin/%{package_prefix}-gfortran
-%{_mandir}/man1/%{package_prefix}-gfortran.1*
-%dir %{_prefix}/libexec
-%dir %{_prefix}/libexec/gcc
-%dir %{_prefix}/libexec/gcc/%{target_platform}
-%dir %{_prefix}/libexec/gcc/%{target_platform}/%{version}
-%{_prefix}/libexec/gcc/%{target_platform}/%{version}/f951
-%dir %{_prefix}/lib
-%dir %{_prefix}/lib/gcc
-%dir %{_prefix}/lib/gcc/%{target_platform}
-%dir %{_prefix}/lib/gcc/%{target_platform}/%{version}
-%{_prefix}/lib/gcc/%{target_platform}/%{version}/libgfortran.a
-%{_prefix}/lib/gcc/%{target_platform}/%{version}/libgfortranbegin.a
-%dir %{_prefix}/lib/gcc/%{target_platform}/%{version}/mea64
-%{_prefix}/lib/gcc/%{target_platform}/%{version}/mea64/libgfortran.a
-%{_prefix}/lib/gcc/%{target_platform}/%{version}/mea64/libgfortranbegin.a
-%endif
-
-%if 0
-%files -n %{package_prefix}-gcc-testsuite
-%defattr(-,root,root)
-%dir %{_prefix}
-%dir %{_prefix}/bin
-%dir %{_prefix}/share
-%{_prefix}/bin/%{package_prefix}-gcc-runtests
-%{_prefix}/share/%{package_prefix}-gcc-testsuite
-%dir /usr/share/dejagnu/baseboards
-/usr/share/dejagnu/baseboards/%{package_prefix}-gcc-*.exp
-%endif
 
 
 %changelog
