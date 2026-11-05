@@ -1,4 +1,12 @@
-%define package_prefix ppu
+%undefine optflags
+%undefine build_ldflags
+%global package_prefix ppu
+%global target_platform powerpc64-linux-gnu
+%global _prefix /opt/cell/toolchain
+%global _libdir /opt/cell/toolchain/lib64
+%global _mandir %{_prefix}/man
+%global _infodir %{_prefix}/info
+%global __os_install_post /usr/lib/rpm/brp-compress
 
 Summary:        GNU binary utilities for the Cell/B.E. PPU
 Name:           %{package_prefix}-binutils
@@ -9,17 +17,11 @@ Group:          Cell Development Tools
 Source0:        https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
 ExclusiveArch:  ppc64 x86_64
 
-BuildRequires:  dejagnu, bison, flex, texinfo, bc
-BuildRequires:  gcc, cpp, binutils, gcc-c++, make
+BuildRequires:  dejagnu, bison, flex, texinfo
+BuildRequires:  gcc, cpp
 
 %description
-The GNU binutils version %{version}.
-
-# When building the cross-toolchain, reset prefix directory and use sysroot
-%define _prefix /opt/cell/toolchain
-%define _libdir /opt/cell/toolchain/lib64
-%define _mandir %{_prefix}/man
-%define _infodir %{_prefix}/info
+The GNU binutils version %{version} for the Cell/B.E. PPU (powerpc64) core.
 
 
 %prep
@@ -27,21 +29,12 @@ The GNU binutils version %{version}.
 
 
 %build
-%define target_platform powerpc64-linux
-rm -fr build
+rm -rf build
 mkdir -p build
-cd build
-#OPT_FLAGS="-O2 -g -march=x86_64 -mtune=generic -m64"
-#TARGET_OPT_FLAGS="$OPT_FLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-#unset CC CXX CFLAGS CXXFLAGS FCFLAGS FFLAGS LDFLAGS
-#unset CFLAGS_FOR_TARGET CXXFLAGS_FOR_TARGET FCFLAGS_FOR_TARGET FFLAGS_FOR_TARGET
-#AR=/usr/bin/ar \
-#AS=/usr/bin/as \
-#LD=/usr/bin/ld \
-#NM=/usr/bin/nm \
-#RANLIB=/usr/bin/ranlib \
-#CFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
-#CXXFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+pushd build
+CC="gcc -m64 -O2 -g" \
+CFLAGS="-mtune=generic -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+LDFLAGS= \
 ../binutils-%{version}/configure \
     --prefix=%{_prefix} \
     --libdir=%{_libdir} \
@@ -58,18 +51,18 @@ cd build
     --disable-nls \
     --disable-werror \
     --enable-64-bit-bfd
-make %{?_smp_mflags} -j1
-cd ../
+make -j1
+popd
 
 
 %check
 
 
 %install
-rm -fr %{buildroot}
-cd build
+rm -rf %{buildroot}
+pushd build
 make DESTDIR=%{buildroot} -j1 install
-cd ../
+popd
 rm -f %{buildroot}%{_mandir}/man1/%{package_prefix}-{dlltool,nlmconv,windres,windmc}*
 rm -rf %{buildroot}%{_infodir}
 rm -rf %{buildroot}%{_mandir}/man7
@@ -121,6 +114,6 @@ rm -rf %{buildroot}%{_mandir}/man7
 
 
 %changelog
-* Sat Oct 17 2026  The Model Citizen  <model.citizen.ps3@gmail.com>  2.32-1
-- Initial build  - https://ps3linux.net
+* Thu Nov 5 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.32-1
+- Initial build - https://ps3linux.net
 
