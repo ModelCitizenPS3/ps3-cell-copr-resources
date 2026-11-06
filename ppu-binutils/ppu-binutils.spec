@@ -1,56 +1,61 @@
 %undefine optflags
 %undefine build_ldflags
-%global package_prefix ppu
-%global target_platform powerpc64-linux-gnu
-%global _prefix /opt/cell/toolchain
-%global _libdir /opt/cell/toolchain/lib64
-%global _mandir %{_prefix}/man
-%global _infodir %{_prefix}/info
-%global __os_install_post /usr/lib/rpm/brp-compress
+%global _build_id_links none
+
+%define package_prefix ppu
 
 Summary:        GNU binary utilities for the Cell/B.E. PPU
 Name:           %{package_prefix}-binutils
 Version:        2.32
-Release:        1.CELL
+Release:        2.CELL
 License:        GPL
 Group:          Cell Development Tools
 Source0:        https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
 ExclusiveArch:  ppc64 x86_64
 
 BuildRequires:  dejagnu, bison, flex, texinfo
-BuildRequires:  gcc, cpp
+BuildRequires:  gcc, cpp, gcc-c++
 
 %description
 The GNU binutils version %{version} for the Cell/B.E. PPU (powerpc64) core.
 
+# Don't strip as the host binutils may be unable to handle SPU objects.
+%global __os_install_post /usr/lib/rpm/brp-compress
+
+# When building the cross-toolchain, reset prefix directory and use sysroot
+%ifarch x86_64
+%global _prefix /opt/cell/toolchain
+%global _libdir %{_prefix}/lib64
+%global _mandir %{_prefix}/man
+%global _infodir %{_prefix}/info
+%global with_sysroot --with-sysroot=/opt/cell/sysroot
+%endif
 
 %prep
 %setup -c -q
 
 
 %build
+%ifarch ppc64
+%define configuration --enable-install-libbfd --target=powerpc64-linux-gnu --enable-targets=spu
+%define target_platform powerpc64-linux-gnu
+%define mcpu_mtune -mcpu=cell -mtune=cell
+%else
+%define configuration --disable-install-libbfd --target=powerpc64-linux-gnu --enable-targets=spu
+%define target_platform powerpc64-linux-gnu
+%define mcpu_mtune -mcpu=x86_64 -mtune=generic
+%endif
 rm -rf build
 mkdir -p build
 pushd build
 CC="gcc -m64 -O2 -g" \
-CFLAGS="-mtune=generic -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+CXX="g++ -m64 -O2 -g" \
+CFLAGS="%{mcpu_mtune} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+CXXFLAGS="%{mcpu_mtune} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
 LDFLAGS= \
-../binutils-%{version}/configure \
-    --prefix=%{_prefix} \
-    --libdir=%{_libdir} \
-    --mandir=%{_mandir}  \
-    --infodir=%{_infodir} \
-	--build=`gcc -dumpmachine` \
-    --host=`gcc -dumpmachine` \
-    --target=%{target_platform} \
-    --enable-targets=spu \
-    --with-sysroot=/opt/cell/sysroot \
-    --with-lib-path=/opt/cell/toolchain/lib64 \
-    --disable-install-libbfd \
-    --program-prefix=%{package_prefix}- \
-    --disable-nls \
-    --disable-werror \
-    --enable-64-bit-bfd
+../binutils-%{version}/configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir}  \
+    --infodir=%{_infodir} %{?with_sysroot} %{configuration} --program-prefix=%{package_prefix}- \
+    --disable-shared --disable-nls --disable-werror --enable-64-bit-bfd
 make -j1
 popd
 
@@ -63,17 +68,23 @@ rm -rf %{buildroot}
 pushd build
 make DESTDIR=%{buildroot} -j1 install
 popd
-rm -f %{buildroot}%{_mandir}/man1/%{package_prefix}-{dlltool,nlmconv,windres,windmc}*
+rm -f %{buildroot}%{_mandir}/man1/%{package_prefix}-{dlltool,windres,windmc}*
 rm -rf %{buildroot}%{_infodir}
-rm -rf %{buildroot}%{_mandir}/man7
+%ifarch ppc64
+rm %{buildroot}%{_prefix}/lib64/lib{bfd,opcodes}.la
+mv %{buildroot}%{_prefix}/lib64/lib{bfd,opcodes}.a %{buildroot}%{_prefix}/%{target_platform}/lib
+mv %{buildroot}%{_prefix}/include %{buildroot}%{_prefix}/%{target_platform}
+%endif
 
 
 %files
 %defattr(-,root,root)
+%ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
 %dir %{_mandir}
 %dir %{_mandir}/man1
+%endif
 %{_prefix}/bin/%{package_prefix}-addr2line
 %{_prefix}/bin/%{package_prefix}-ar
 %{_prefix}/bin/%{package_prefix}-as
@@ -110,10 +121,23 @@ rm -rf %{buildroot}%{_mandir}/man7
 %{_mandir}/man1/%{package_prefix}-strings.1*
 %{_mandir}/man1/%{package_prefix}-strip.1*
 %{_mandir}/man1/%{package_prefix}-gprof.1*
-%{_prefix}/man/man1/ppu-elfedit.1*
+%{_mandir}/man1/%{package_prefix}-elfedit.1*
+%ifarch ppc64
+%dir %{_prefix}/%{target_platform}/include
+%{_prefix}/%{target_platform}/include/ansidecl.h
+%{_prefix}/%{target_platform}/include/bfd.h
+%{_prefix}/%{target_platform}/include/bfd_stdint.h
+%{_prefix}/%{target_platform}/include/bfdlink.h
+%{_prefix}/%{target_platform}/include/diagnostics.h
+%{_prefix}/%{target_platform}/include/dis-asm.h
+%{_prefix}/%{target_platform}/include/plugin-api.h
+%{_prefix}/%{target_platform}/include/symcat.h
+%{_prefix}/%{target_platform}/lib/libbfd.a
+%{_prefix}/%{target_platform}/lib/libopcodes.a
+%endif
 
 
 %changelog
-* Thu Nov 5 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.32-1
+* Thu Nov 5 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.32-2
 - Initial build - https://ps3linux.net
 

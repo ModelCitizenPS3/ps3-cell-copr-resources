@@ -1,68 +1,62 @@
-# Don't strip as the host binutils may be unable to handle SPU objects.
-%define __os_install_post /usr/lib/rpm/brp-compress
+%undefine optflags
+%undefine build_ldflags
+%global _build_id_links none
 
 %define package_prefix spu
 
 Summary:        GNU binary utilities for the Cell/B.E. SPU
 Name:           %{package_prefix}-binutils
 Version:        2.32
-Release:        1.CELL
+Release:        2.CELL
 License:        GPL
 Group:          Cell Development Tools
 Source0:        https://ftp.gnu.org/gnu/binutils/binutils-%{version}.tar.xz
 ExclusiveArch:  ppc64 x86_64
 
-BuildRequires:  gcc, gcc-c++, cpp, gmp-devel, make
-BuildRequires:  mpfr-devel, libmpc-devel, isl-devel
-BuildRequires:  dejagnu, bison, flex, texinfo, bc, cpp
-Requires:       gmp, mpfr, libmpc, isl
+BuildRequires:  dejagnu, bison, flex, texinfo
+BuildRequires:  gcc, cpp, gcc-c++
 
 %description
-The GNU binutils version %{version}.
+The GNU binutils version %{version} for the Cell/B.E. SPU cores.
 
+# Don't strip as the host binutils may be unable to handle SPU objects.
+%define __os_install_post /usr/lib/rpm/brp-compress
 
 # When building the cross-toolchain, reset prefix directory and use sysroot
+%ifarch x86_64
 %define _prefix /opt/cell/toolchain
-%define _libdir /opt/cell/toolchain/lib
+%define _libdir %{_prefix}/lib
 %define _mandir %{_prefix}/man
 %define _infodir %{_prefix}/info
+%define with_sysroot --with-sysroot=/opt/cell/sysroot
+%endif
+
 
 %prep
 %setup -c -q
 
 
 %build
+%ifarch ppc64
+%define mcpu_mtune -mcpu=cell -mtune=cell
+%else
+%define mcpu_mtune -mcpu=x86_64 -mtune=generic
+%endif
+%define configuration --target=spu
 %define target_platform spu
-
-rm -fr build
-mkdir build
-cd build
-
-#unset CC CXX CFLAGS CXXFLAGS FCFLAGS FFLAGS LDFLAGS
-#unset CFLAGS_FOR_TARGET CXXFLAGS_FOR_TARGET FCFLAGS_FOR_TARGET FFLAGS_FOR_TARGET
-#AR=/usr/bin/ar \
-#AS=/usr/bin/as \
-#LD=/usr/bin/ld \
-#NM=/usr/bin/nm \
-#RANLIB=/usr/bin/ranlib \
-#CFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
-#CXXFLAGS_FOR_TARGET="-O2 -g -march=x86_64 -mtune=generic -m64 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
-../binutils-%{version}/configure \
-    --prefix=%{_prefix} \
-    --libdir=%{_libdir} \
-    --mandir=%{_mandir} \
-    --infodir=%{_infodir} \
-	--build=`gcc -dumpmachine` \
-    --host=`gcc -dumpmachine` \
-    --target=spu \
-    --with-sysroot=/opt/cell/sysroot \
-    --program-prefix=%{package_prefix}- \
-    --with-lib-path=/opt/cell/toolchain/lib \
-    --disable-nls \
-    --disable-werror \
-    --enable-64-bit-bfd
-make %{?_smp_mflags}
-cd ../
+rm -rf build
+mkdir -p build
+pushd build
+CC="gcc -m64 -O2 -g" \
+CXX="g++ -m64 -O2 -g" \
+CFLAGS="%{mcpu_mtune} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+CXXFLAGS="%{mcpu_mtune} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+LDFLAGS= \
+../binutils-%{version}/configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir}  \
+    --infodir=%{_infodir} %{?with_sysroot} %{configuration} --program-prefix=%{package_prefix}- \
+    --disable-shared --disable-nls --disable-werror --enable-64-bit-bfd
+make -j1
+popd
 
 
 %check
@@ -70,24 +64,21 @@ cd ../
 
 %install
 rm -fr %{buildroot}
-
-cd build
+pushd build
 make DESTDIR=%{buildroot} -j1 install
-cd ../
-
-rm -f %{buildroot}%{_mandir}/man1/%{package_prefix}-{dlltool,nlmconv,windres,windmc}*
+popd
+rm -f %{buildroot}%{_mandir}/man1/%{package_prefix}-{dlltool,windres,windmc}*
 rm -rf %{buildroot}%{_infodir}
-rm -rf %{buildroot}%{_mandir}/man7
-
-cd ..
 
 
 %files
 %defattr(-,root,root)
+%ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
 %dir %{_mandir}
 %dir %{_mandir}/man1
+%endif
 %{_prefix}/bin/%{package_prefix}-addr2line
 %{_prefix}/bin/%{package_prefix}-ar
 %{_prefix}/bin/%{package_prefix}-as
@@ -123,10 +114,10 @@ cd ..
 %{_mandir}/man1/%{package_prefix}-strings.1*
 %{_mandir}/man1/%{package_prefix}-strip.1*
 %{_mandir}/man1/%{package_prefix}-gprof.1*
-%{_mandir}/man1/spu-elfedit.1*
+%{_mandir}/man1/%{package_prefix}-elfedit.1*
 
 
 %changelog
-* Sat Oct 17 2026 The Model Citizen <model.citizen.ps3@gmail.com>  2.33.1-1
+* Thu Nov 5 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.32-2
 - Initial build - https://ps3linux.net
 
