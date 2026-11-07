@@ -24,8 +24,10 @@ ExclusiveArch:  ppc64 x86_64
 
 BuildRequires:  spu-binutils, gcc, cpp, gcc-c++, make, texinfo
 BuildRequires:  gmp-devel, mpfr-devel, libmpc-devel, isl-devel
+BuildRequires:  spu-gcc, spu-gcc-c++
 Requires:       gmp, mpfr, libmpc, isl
 Obsoletes:      spu-gcc <= 9.5.0-2.CELL
+Obsoletes:      spu-gcc-c++ <= 9.5.0-2.CELL
 AutoReq:        no
 AutoProv:       no
 
