@@ -1,10 +1,19 @@
+# banish all Fedora/RedHat compile flags from the build
 %undefine optflags
+%undefine build_cflags
+%undefine build_cxxflags
 %undefine build_ldflags
+%undefine _hardened_build
+%undefine _annotated_build
+
+# dwz runs slow as hell on the PS3... verboten
+%ifarch ppc64
 %undefine _find_debuginfo_dwz_opts
+%endif
 
 %define package_prefix spu
 
-Name:           %{package_prefix}-gcc
+Name:           spu-gcc
 Version:        9.5.0
 Release:        2.CELL
 Summary:        GNU Compiler Collection for Cell Broadband Engine SPU
