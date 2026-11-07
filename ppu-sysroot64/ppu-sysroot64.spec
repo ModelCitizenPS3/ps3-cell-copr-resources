@@ -58,6 +58,7 @@ TOP=$PWD
 BOOT=$TOP/bootstrap
 STAGE=$TOP/kernel-headers
 P=%{tool_prefix}
+export PATH=/opt/cell/toolchain/bin:$PATH
 
 # --- 1. Kernel headers ------------------------------------------------------
 make -C linux-%{kver} ARCH=powerpc headers_install INSTALL_HDR_PATH=$STAGE
@@ -71,7 +72,6 @@ mkdir build-gcc && pushd build-gcc
     --program-prefix=$P \
     --with-as=/opt/cell/toolchain/bin/${P}as \
     --with-ld=/opt/cell/toolchain/bin/${P}ld \
-    --with-ar=/opt/cell/toolchain/bin/${P}ar \
     --with-cpu=cell \
     --with-long-double-128 \
     --disable-multilib \
