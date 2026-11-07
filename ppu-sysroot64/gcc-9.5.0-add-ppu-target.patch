@@ -1,0 +1,14 @@
+--- a/config.sub	2026-10-11 17:05:02.519182654 -0400
++++ b/config.sub	2026-10-11 17:05:02.561238520 -0400
+@@ -484,6 +484,11 @@
+ 				basic_machine=hppa-unknown
+ 				os=linux
+ 				;;
++			ppu)
++				# Cell BE PPU: alias for powerpc64-unknown-linux-gnu
++				basic_machine=powerpc64-unknown
++				os=linux-gnu
++				;;
+ 			pw32)
+ 				basic_machine=i586-unknown
+ 				os=pw32
