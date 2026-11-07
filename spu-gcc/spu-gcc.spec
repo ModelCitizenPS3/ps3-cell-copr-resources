@@ -1,14 +1,12 @@
-%undefine _hardened_build
-%define optflags -O2
-# Don't strip as the host binutils may be unable to handle SPU/PPU objects.
-%define __os_install_post /usr/lib/rpm/brp-compress
-%define _use_internal_dependency_generator 0
+%undefine optflags
+%undefine build_ldflags
+%undefine _find_debuginfo_dwz_opts
 
 %define package_prefix spu
 
 Name:           %{package_prefix}-gcc
 Version:        9.5.0
-Release:        1.CELL
+Release:        2.CELL
 Summary:        GNU Compiler Collection for Cell Broadband Engine SPU
 License:        GPL
 Group:          Cell Development Tools
@@ -20,19 +18,30 @@ ExclusiveArch:  ppc64 x86_64
 BuildRequires:  zlib-devel, gettext, dejagnu, bison, flex, texinfo, isl-devel
 BuildRequires:  gcc, gcc-c++, binutils, cpp, gmp-devel, mpfr-devel, libmpc-devel
 BuildRequires:  %{package_prefix}-binutils
+#BuildRequires:  spu-newlib
 Requires:       %{package_prefix}-binutils
 Requires:       gmp, mpfr, libmpc, isl
+#Requires:       spu-newlib
 AutoProv:       no
 AutoReq:        no
 
 %description 
 The GNU Compiler Collection version %{version}.
 
+# Don't strip as the host binutils may be unable to handle SPU/PPU objects.
+%define __os_install_post /usr/lib/rpm/brp-compress
+
 # When building the cross-toolchain, reset prefix directory and use sysroot
+%ifarch x86_64
 %define _prefix /opt/cell/toolchain
 %define _libdir %{_prefix}/lib
 %define _mandir %{_prefix}/man
 %define _infodir %{_prefix}/info
+%define with_sysroot --with-sysroot=/opt/cell/sysroot
+%define _use_internal_dependency_generator 1
+%else
+%define _libdir %{_prefix}/lib
+%endif
 
 %package -n %{package_prefix}-gcc-c++
 Summary:    C++ support for %{package_prefix}-gcc
@@ -57,67 +66,59 @@ popd
 
 %build
 %define target_platform %{package_prefix}
+%ifarch ppc64
+%define build_arch powerpc64-unknown-linux-gnu
+%define mcpu_mtune -mcpu=cell -mtune=cell
+%else
+%define build_arch x86_64-unknown-linux-gnu
+%define mcpu_mtune -mcpu=x86_64 -mtune=generic
+%endif
 
-rm -fr build
+rm -rf build
 mkdir build
 pushd build
 
-CC="gcc -m64" CXX="g++ -m64" \
-CFLAGS="-O2 -g" CXXFLAGS="-O2 -g" \
-../gcc-%{version}/configure \
-    --prefix=%{_prefix} \
-    --libdir=%{_libdir} \
-    --mandir=%{_mandir} \
-    --infodir=%{_infodir} \
-	--disable-shared \
-    --disable-threads \
-    --disable-checking \
-	--with-system-zlib \
-    --with-newlib \
-	--enable-languages=c,c++ \
-    --disable-nls \
-	--enable-version-specific-runtime-libs \
-    --disable-libssp \
-	--program-prefix=%{package_prefix}- \
-	--disable-hosted-libstdcxx \
-    --enable-cxx-flags='-fno-exceptions' \
-    --build=`gcc -dumpmachine` \
-    --host=`gcc -dumpmachine` \
-	--target=%{target_platform} \
-    --with-gmp=/usr \
-    --with-mpfr=/usr \
-    --with-mpc=/usr \
-    --with-isl=/usr \
-    --with-as=/opt/cell/toolchain/bin/spu-as \
-    --with-ar=/opt/cell/toolchain/bin/spu-ar \
-    --with-ld=/opt/cell/toolchain/bin/spu-ld \
-    --with-nm=/opt/cell/toolchain/bin/spu-nm \
-    --with-ranlib=/opt/cell/toolchain/bin/spu-ranlib \
-    --disable-werror \
-    --enable-obsolete
+CC="gcc -m64" \
+CXX="g++ -m64" \
+CFLAGS="-O2 -g %{mcpu_mtune} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+CXXFLAGS="-O2 -g %{mcpu_mtune} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+LDFLAGS= \
+../gcc-%{version}/configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir} \
+    --infodir=%{_infodir} %{?with_sysroot} --disable-shared --disable-threads --disable-checking \
+    --with-headers --with-system-zlib --with-newlib --enable-languages=c,c++ --disable-nls \
+    --enable-version-specific-runtime-libs --disable-libssp --program-prefix=%{package_prefix}- \
+    --disable-hosted-libstdcxx --enable-cxx-flags='-fno-exceptions' --target=%{target_platform} \
+    --disable-werror --disable-libcc1 --enable-obsolete 
 popd
-make -C build %{?_smp_mflags}
+make -C build -j1
+
+
+%check
 
 
 %install
 rm -fr %{buildroot}
-make -C build DESTDIR=%{buildroot} install
+make -C build DESTDIR=%{buildroot} -j1 install
 
-ln -sf %{package_prefix}-gcc $RPM_BUILD_ROOT%{_prefix}/bin/%{package_prefix}-cc
-rm -f $RPM_BUILD_ROOT%{_prefix}/bin/vxaddr2line
-rm -f $RPM_BUILD_ROOT%{_prefix}/bin/%{target_platform}-%{package_prefix}-*
-rm -f $RPM_BUILD_ROOT%{_prefix}/bin/%{package_prefix}-gcc-%{version}
-rm -f $RPM_BUILD_ROOT%{_prefix}/bin/%{package_prefix}-gccbug
-rm -f $RPM_BUILD_ROOT%{_prefix}/lib*/libiberty.a
-rm -f $RPM_BUILD_ROOT%{_prefix}/lib*/*/libiberty.a
-rm -f $RPM_BUILD_ROOT%{_prefix}/%{target_platform}/lib*/libiberty.a
-rm -f $RPM_BUILD_ROOT%{_prefix}/%{target_platform}/lib*/*/libiberty.a
-rm -rf $RPM_BUILD_ROOT%{_prefix}/lib/gcc/%{target_platform}/%{version}/install-tools
-rm -rf $RPM_BUILD_ROOT%{_prefix}/libexec/gcc/%{target_platform}/%{version}/install-tools
-rm -f $RPM_BUILD_ROOT%{_prefix}/lib/gcc/%{target_platform}/%{version}/*.la
-rm -f $RPM_BUILD_ROOT%{_prefix}/lib/gcc/%{target_platform}/%{version}/*/*.la
+ln -sf %{package_prefix}-gcc %{buildroot}%{_prefix}/bin/%{package_prefix}-cc
+
+rm -f %{buildroot}%{_prefix}/bin/vxaddr2line
+rm -f %{buildroot}%{_prefix}/bin/%{target_platform}-%{package_prefix}-*
+rm -f %{buildroot}%{_prefix}/bin/%{package_prefix}-gcc-%{version}
+rm -f %{buildroot}%{_prefix}/bin/%{package_prefix}-gccbug
+
+rm -f %{buildroot}%{_prefix}/lib*/libiberty.a
+rm -f %{buildroot}%{_prefix}/lib*/*/libiberty.a
+rm -f %{buildroot}%{_prefix}/%{target_platform}/lib*/libiberty.a
+rm -f %{buildroot}%{_prefix}/%{target_platform}/lib*/*/libiberty.a
+
+rm -rf %{buildroot}%{_prefix}/lib/gcc/%{target_platform}/%{version}/install-tools
+rm -rf %{buildroot}%{_prefix}/libexec/gcc/%{target_platform}/%{version}/install-tools
+
+rm -f %{buildroot}%{_prefix}/lib/gcc/%{target_platform}/%{version}/*.la
+rm -f %{buildroot}%{_prefix}/lib/gcc/%{target_platform}/%{version}/*/*.la
+
 rm -f %{buildroot}%{_prefix}/libexec/gcc/%{target_platform}/%{version}/liblto_plugin.la
-rm -f %{buildroot}%{_prefix}/lib64/libcc1.la
 
 for h in \
   `find $RPM_BUILD_ROOT%{_prefix}/lib/gcc/%{target_platform}/%{version}/include -name \*.h`
@@ -155,18 +156,21 @@ exec %{_prefix}/bin/%{package_prefix}-gcc $fl ${1+"$@"}
 EOF
 chmod 755 $RPM_BUILD_ROOT%{_prefix}/bin/%{package_prefix}-c?9
 
-rm -rf $RPM_BUILD_ROOT%{_infodir}
-rm -rf $RPM_BUILD_ROOT%{_mandir}/man7
+rm -rf %{buildroot}%{_infodir}
+rm -rf %{buildroot}%{_mandir}/man7
 rm -f %{buildroot}%{_prefix}/bin/spu-gcc-{ar,nm,ranlib}
 rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 
 
 %files -n %{package_prefix}-gcc
 %defattr(-,root,root)
+%ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
 %dir %{_mandir}
 %dir %{_mandir}/man1
+%dir %{_prefix}/lib
+%endif
 %{_prefix}/bin/%{package_prefix}-cc
 %{_prefix}/bin/%{package_prefix}-c89
 %{_prefix}/bin/%{package_prefix}-c99
@@ -176,11 +180,8 @@ rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 %{_mandir}/man1/%{package_prefix}-gcc.1*
 %{_mandir}/man1/%{package_prefix}-gcov.1*
 %{_mandir}/man1/%{package_prefix}-cpp.1*
-%{_mandir}/man1/%{target_platform}-gcov-dump.1
-%{_mandir}/man1/%{target_platform}-gcov-tool.1
-%{_prefix}/lib64/libcc1.so
-%{_prefix}/lib64/libcc1.so.0
-%{_prefix}/lib64/libcc1.so.0.0.0
+%{_mandir}/man1/%{package_prefix}-gcov-dump.1*
+%{_mandir}/man1/%{package_prefix}-gcov-tool.1*
 %dir %{_prefix}/libexec
 %dir %{_prefix}/libexec/gcc
 %dir %{_prefix}/libexec/gcc/%{target_platform}
@@ -193,7 +194,6 @@ rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 %{_prefix}/libexec/gcc/%{target_platform}/%{version}/lto-wrapper
 %{_prefix}/libexec/gcc/%{target_platform}/%{version}/lto1
 %{_prefix}/libexec/gcc/%{target_platform}/%{version}/plugin/gengtype
-%dir %{_prefix}/lib
 %dir %{_prefix}/lib/gcc
 %dir %{_prefix}/lib/gcc/%{target_platform}
 %dir %{_prefix}/lib/gcc/%{target_platform}/%{version}
@@ -239,10 +239,13 @@ rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 
 %files -n %{package_prefix}-gcc-c++
 %defattr(-,root,root)
+%ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
 %dir %{_mandir}
 %dir %{_mandir}/man1
+%dir %{_prefix}/lib
+%endif
 %{_prefix}/bin/%{package_prefix}-g++
 %{_prefix}/bin/%{package_prefix}-c++
 %{_mandir}/man1/%{package_prefix}-g++.1*
@@ -251,7 +254,6 @@ rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 %dir %{_prefix}/libexec/gcc/%{target_platform}
 %dir %{_prefix}/libexec/gcc/%{target_platform}/%{version}
 %{_prefix}/libexec/gcc/%{target_platform}/%{version}/cc1plus
-%dir %{_prefix}/lib
 %dir %{_prefix}/lib/gcc
 %dir %{_prefix}/lib/gcc/%{target_platform}
 %dir %{_prefix}/lib/gcc/%{target_platform}/%{version}
@@ -263,6 +265,6 @@ rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 
 
 %changelog
-* Sun Oct 18 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-1
+* Fri Nov 6 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-2
 - Initial build - https://ps3linux.net
 
