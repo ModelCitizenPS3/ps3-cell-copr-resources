@@ -71,6 +71,7 @@ mkdir build-gcc && pushd build-gcc
     --program-prefix=$P \
     --with-as=/opt/cell/toolchain/bin/${P}as \
     --with-ld=/opt/cell/toolchain/bin/${P}ld \
+    --with-ar=/opt/cell/toolchain/bin/${P}ar \
     --with-cpu=cell \
     --with-long-double-128 \
     --disable-multilib \
