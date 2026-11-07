@@ -31,7 +31,7 @@ Source3:        gcc-9.5.0-add-ppu-target.patch
 Source4:        gcc-9.5.0-format-security-syntax-fix.patch
 ExclusiveArch:  x86_64
 
-BuildRequires:  ppu-binutils, python2, python3, texinfo, rsync
+BuildRequires:  ppu-binutils, python3, texinfo, rsync
 BuildRequires:  gcc, gcc-c++, cpp, make, bison, flex, gawk, sed, perl-interpreter
 BuildRequires:  gmp-devel, mpfr-devel, libmpc-devel
 
