@@ -54,6 +54,7 @@ popd
 
 
 %build
+export PATH=/opt/cell/toolchain/bin:$PATH
 TOP=$PWD
 BOOT=$TOP/bootstrap
 STAGE=$TOP/kernel-headers
