@@ -1,4 +1,3 @@
-# banish all Fedora/RedHat compile flags from the build
 %undefine optflags
 %undefine build_cflags
 %undefine build_cxxflags
@@ -61,46 +60,6 @@ AutoReq:    yes
 %description -n ppu-gcc-c++
 GNU Compiler Collection C++ compiler for Cell Broadband Engine.
 
-%if 0
-%package -n ppu-gcc-fortran
-Summary:    Fortran support for ppu-gcc
-Group:      Cell Development Tools
-Requires:   ppu-gcc = %{version}-%{release}
-AutoProv:   no
-AutoReq:    yes
-
-%description -n ppu-gcc-fortran
-GNU Compiler Collection Fortran compiler for Cell Broadband Engine.
-
-%package -n ppu-gcc-testsuite
-Summary:    DejaGnu testsuite for ppu-gcc
-Group:      Cell Development Tools
-Requires:   ppu-gcc = %{version}-%{release}
-Requires:   dejagnu
-AutoProv:   no
-AutoReq:    no
-
-%description -n ppu-gcc-testsuite
-Testsuite driver for the Cell Broadband Engine version of GCC.
-
-%package -n ppu-gcc-gnat
-Summary:        Ada support for PPU compiler
-Group:          Cell Development Tools
-Requires:       ppu-gcc = %{version}-%{release}
-# ppu-gnat version will not compile
-# Fedora 44's gcc-gnat is too new; it will not bootstrap our build
-%if 0
-BuildRequires:  ppu-gcc-gnat
-%else
-BuildRequires:  gcc-gnat
-%endif
-AutoProv:       no
-AutoReq:        no
-
-%description -n ppu-gcc-gnat
-GNU Compiler Collection Ada compiler for Cell Broadband Engine.
-%endif
-
 
 %prep
 %setup -q -n gcc-%{version}
@@ -111,9 +70,16 @@ patch -p1 < %{PATCH2}
 %build
 %ifarch ppc64
 %define build_arch powerpc64-unknown-linux-gnu
-%else
+%define with_as /usr/bin/ppu-as
+%define with_ld /usr/bin/ppu-ld
+%endif
+%ifarch x86_64
 %define build_arch x86_64-unknown-linux-gnu
-export PATH=/opt/cell/toolchain/bin:$PATH
+%define with_as /opt/cell/toolchain/bin/ppu-as
+%define with_ld /opt/cell/toolchain/bin/ppu-ld
+export AR_FOR_TARGET=/opt/cell/toolchain/bin/ppu-ar
+export RANLIB_FOR_TARGET=/opt/cell/toolchain/bin/ppu-ranlib
+export NM_FOR_TARGET=/opt/cell/toolchain/bin/ppu-nm
 %endif
 
 rm -rf obj-powerpc64-linux-gnu
@@ -127,10 +93,11 @@ CC="ppu-gcc -m64"
 CC="gcc -m64"
 %endif
 #CC="$CC" CFLAGS="$PPU_OPT_FLAGS" CXXFLAGS="$PPU_OPT_FLAGS" XCFLAGS="$OPT_FLAGS" TCFLAGS="$PPU_OPT_FLAGS" \
-LDFLAGS= ../configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir} --infodir=%{_infodir} \
+LDFLAGS= \
+../configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir} --infodir=%{_infodir} \
 	%{?with_sysroot} \
-	--with-as=`which ppu-as` \
-	--with-ld=`which ppu-ld` \
+	--with-as=%{with_as} \
+	--with-ld=%{with_ld} \
 	--enable-threads --with-system-zlib --disable-checking \
 	--enable-__cxa_atexit --disable-libunwind-exceptions \
 	--enable-languages=c,c++ --disable-nls \
@@ -213,28 +180,6 @@ exec %{_bindir}/ppu-gcc $fl ${1+"$@"}
 EOF
 chmod 755 %{buildroot}%{_bindir}/ppu-c?9
 
-mkdir -p %{buildroot}%{_datadir}
-cp -R gcc/testsuite %{buildroot}%{_datadir}/ppu-gcc-testsuite
-install -m 755 contrib/test_installed %{buildroot}%{_datadir}/ppu-gcc-testsuite/
-cat > %{buildroot}%{_bindir}/ppu-gcc-runtests << "EOF"
-#!/bin/sh
-%{_datadir}/ppu-gcc-testsuite/test_installed \
-    --with-testsuite=%{_datadir}/ppu-gcc-testsuite \
-    --with-gcc=%{_bindir}/ppu-gcc \
-    --with-g++=%{_bindir}/ppu-g++ \
-    --with-gfortran=%{_bindir}/ppu-gfortran \
-    --without-objc \
-%if %{with spu}
-    --target spu-unknown-elf \
-%endif
-%if %{with ppu}
-    --target_board unix/-m64
-%else
-    --target_board compile-only
-%endif
-EOF
-chmod 755 %{buildroot}%{_bindir}/ppu-gcc-runtests
-
 rm -rf %{buildroot}%{_infodir}
 rm -rf %{buildroot}%{_mandir}/man7
 rm -f %{buildroot}%{_libdir}/gcc/powerpc64-linux-gnu/%{version}/include-fixed/README
@@ -248,65 +193,57 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 
 %files -n ppu-gcc
 %defattr(-,root,root)
+%ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
-%dir %{_mandir}
-%dir %{_mandir}/man1
-%{_prefix}/bin/ppu-cc
+%endif
 %{_prefix}/bin/ppu-c89
 %{_prefix}/bin/ppu-c99
+%{_prefix}/bin/ppu-cc
+%{_prefix}/bin/ppu-cpp
 %{_prefix}/bin/ppu-gcc
 %{_prefix}/bin/ppu-gcov
-%{_prefix}/bin/ppu-cpp
-%dir %{_prefix}/lib64
-%dir %{_prefix}/lib64/gcc
-%dir %{_prefix}/lib64/gcc/ppu
-%dir %{_prefix}/lib64/gcc/ppu/%{version}
-%dir %{_prefix}/lib64/gcc/ppu/%{version}/include
-%{_prefix}/lib64/gcc/ppu/%{version}/include/stddef.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/stdarg.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/varargs.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/float.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/stdbool.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/iso646.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/unwind.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/vec_types.h
-%{_prefix}/lib64/gcc/ppu/%{version}/*crt*.o
-%{_prefix}/lib64/gcc/ppu/%{version}/libgcc.a
-%{_prefix}/lib64/gcc/ppu/%{version}/libgcov.a
-%{_prefix}/lib64/gcc/ppu/%{version}/libgcc_*.a
-%{_prefix}/lib64/libcc1.so
-%{_prefix}/lib64/libcc1.so.0
-%{_prefix}/lib64/libcc1.so.0.0.0
-%dir %{_prefix}/lib64/gcc/ppu/%{version}/plugin
-%{_prefix}/lib64/gcc/ppu/%{version}/plugin/*
-%{_mandir}/man1/ppu-gcc.1*
-%{_mandir}/man1/ppu-gcov.1*
-%{_mandir}/man1/ppu-cpp.1*
-%dir %{_prefix}/libexec
-%dir %{_prefix}/libexec/gcc
-%dir %{_prefix}/libexec/gcc/ppu
-%dir %{_prefix}/libexec/gcc/ppu/%{version}
-%{_prefix}/libexec/gcc/ppu/%{version}/cc1
-%{_prefix}/libexec/gcc/ppu/%{version}/collect2
 %{_prefix}/bin/ppu-gcc-ar
 %{_prefix}/bin/ppu-gcc-nm
 %{_prefix}/bin/ppu-gcc-ranlib
 %{_prefix}/bin/ppu-gcov-dump
 %{_prefix}/bin/ppu-gcov-tool
+%ifarch x86_64
+%dir %{_prefix}/lib64
+%endif
+%dir %{_prefix}/lib64/gcc
+%dir %{_prefix}/lib64/gcc/ppu
+%dir %{_prefix}/lib64/gcc/ppu/%{version}
+%{_prefix}/lib64/gcc/ppu/%{version}/crtbegin.o
+%{_prefix}/lib64/gcc/ppu/%{version}/crtbeginS.o
+%{_prefix}/lib64/gcc/ppu/%{version}/crtbeginT.o
+%{_prefix}/lib64/gcc/ppu/%{version}/crtend.o
+%{_prefix}/lib64/gcc/ppu/%{version}/crtendS.o
+%{_prefix}/lib64/gcc/ppu/%{version}/ecrti.o
+%{_prefix}/lib64/gcc/ppu/%{version}/ecrtn.o
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/include-fixed
+%{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/README
 %{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/limits.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/syslimits.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/ppc-asm.h
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/include
 %{_prefix}/lib64/gcc/ppu/%{version}/include/altivec.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/float.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/iso646.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/ppc-asm.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/ppu_intrinsics.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/si2vmx.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/spu2vmx.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/ppu_intrinsics.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/README
-%{_prefix}/lib64/gcc/ppu/%{version}/libgcc_s*
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdarg.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdbool.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stddef.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/unwind.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/varargs.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/vec_types.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/amo.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/bmi2intrin.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/bmiintrin.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/emmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/gcov.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/htmintrin.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/htmxlintrin.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/mm_malloc.h
@@ -315,143 +252,125 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 %{_prefix}/lib64/gcc/ppu/%{version}/include/openacc.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/pmmintrin.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/smmintrin.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/tmmintrin.h
-%{_prefix}/lib64/gcc/ppu/%{version}/include/xmmintrin.h
-%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.a
-%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so
-%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so.1
-%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so.1.2.0
-%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.a
-%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so
-%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so.1
-%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so.1.0.0
-%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.spec
-%{_prefix}/lib64/gcc/ppu/%{version}/include/x86intrin.h
-%{_prefix}/man/man1/ppu-gcov-dump.1
-%{_prefix}/man/man1/ppu-gcov-tool.1
-%{_prefix}/lib64/gcc/ppu/%{version}/include/gcov.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/stdalign.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/stdatomic.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/stdfix.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/stdint-gcc.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/stdint.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include/stdnoreturn.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/tmmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/x86intrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/xmmintrin.h
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/install-tools
+%{_prefix}/lib64/gcc/ppu/%{version}/install-tools/fixinc_list
+%{_prefix}/lib64/gcc/ppu/%{version}/install-tools/gsyslimits.h
+%{_prefix}/lib64/gcc/ppu/%{version}/install-tools/include/README
+%{_prefix}/lib64/gcc/ppu/%{version}/install-tools/include/limits.h
+%{_prefix}/lib64/gcc/ppu/%{version}/install-tools/macro_list
+%{_prefix}/lib64/gcc/ppu/%{version}/install-tools/mkheaders.conf
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcc.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcc_eh.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcc_s.so
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcc_s.so.1
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcov.a
+%{_prefix}/lib64/gcc/ppu/%{version}/ncrti.o
+%{_prefix}/lib64/gcc/ppu/%{version}/ncrtn.o
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.la
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so.1
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so.1.2.0
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.la
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so.1
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so.1.0.0
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.spec
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/plugin
+%{_prefix}/lib64/gcc/ppu/%{version}/plugin/*
+%{_prefix}/lib64/libcc1.so
+%{_prefix}/lib64/libcc1.so.0
+%{_prefix}/lib64/libcc1.so.0.0.0
+%ifarch x86_64
+%dir %{_prefix}/libexec
+%endif
+%dir %{_prefix}/libexec/gcc
+%dir %{_prefix}/libexec/gcc/ppu
+%dir %{_prefix}/libexec/gcc/ppu/%{version}
+%{_prefix}/libexec/gcc/ppu/%{version}/cc1
+%{_prefix}/libexec/gcc/ppu/%{version}/collect2
+%dir %{_prefix}/libexec/gcc/ppu/%{version}/install-tools
+%{_prefix}/libexec/gcc/ppu/%{version}/install-tools/fixinc.sh
+%{_prefix}/libexec/gcc/ppu/%{version}/install-tools/fixincl
+%{_prefix}/libexec/gcc/ppu/%{version}/install-tools/mkheaders
+%{_prefix}/libexec/gcc/ppu/%{version}/install-tools/mkinstalldirs
+%{_prefix}/libexec/gcc/ppu/%{version}/liblto_plugin.la
 %{_prefix}/libexec/gcc/ppu/%{version}/liblto_plugin.so
 %{_prefix}/libexec/gcc/ppu/%{version}/liblto_plugin.so.0
 %{_prefix}/libexec/gcc/ppu/%{version}/liblto_plugin.so.0.0.0
 %{_prefix}/libexec/gcc/ppu/%{version}/lto-wrapper
 %{_prefix}/libexec/gcc/ppu/%{version}/lto1
+%dir %{_prefix}/libexec/gcc/ppu/%{version}/plugin
 %{_prefix}/libexec/gcc/ppu/%{version}/plugin/gengtype
+%ifarch x86_64
+%dir %{_prefix}/man
+%dir %{_prefix}/man/man1
+%endif
+%{_prefix}/man/man1/ppu-cpp.1
+%{_prefix}/man/man1/ppu-gcc.1
+%{_prefix}/man/man1/ppu-gcov.1
+%{_prefix}/man/man1/ppu-gcov-dump.1
+%{_prefix}/man/man1/ppu-gcov-tool.1
 
 %files -n ppu-gcc-c++
 %defattr(-,root,root)
+%ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
-%dir %{_mandir}
-%dir %{_mandir}/man1
-%{_prefix}/bin/ppu-g++
+%endif
 %{_prefix}/bin/ppu-c++
-%{_mandir}/man1/ppu-g++.1*
+%{_prefix}/bin/ppu-g++
+%ifarch x86_64
+%dir %{_prefix}/lib64
+%endif
+%dir %{_prefix}/lib64/gcc
+%dir %{_prefix}/lib64/gcc/ppu
+%dir %{_prefix}/lib64/gcc/ppu/%{version}
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/include
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/include/c++
+%{_prefix}/lib64/gcc/ppu/%{version}/include/c++/*
+%{_prefix}/lib64/gcc/ppu/%{version}/libstdc++.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libstdc++.so
+%{_prefix}/lib64/gcc/ppu/%{version}/libstdc++.so.6
+%{_prefix}/lib64/gcc/ppu/%{version}/libsupc++.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libitm.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libitm.la
+%{_prefix}/lib64/gcc/ppu/%{version}/libitm.so
+%{_prefix}/lib64/gcc/ppu/%{version}/libitm.so.1
+%{_prefix}/lib64/gcc/ppu/%{version}/libitm.so.1.0.0
+%{_prefix}/lib64/gcc/ppu/%{version}/libitm.spec
+%{_prefix}/lib64/gcc/ppu/%{version}/libstdc++.la
+%{_prefix}/lib64/gcc/ppu/%{version}/libstdc++.so.6.0.28
+%{_prefix}/lib64/gcc/ppu/%{version}/libstdc++.so.6.0.28-gdb.py
+%{_prefix}/lib64/gcc/ppu/%{version}/libstdc++fs.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libstdc++fs.la
+%{_prefix}/lib64/gcc/ppu/%{version}/libsupc++.la
+%ifarch x86_64
 %dir %{_prefix}/libexec
+%endif
 %dir %{_prefix}/libexec/gcc
-%dir %{_prefix}/libexec/gcc/powerpc64-linux-gnu
-%dir %{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/cc1plus
-%dir %{_prefix}/lib
-%dir %{_prefix}/lib/gcc
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/c++
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libsupc++.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libstdc++.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libstdc++.so*
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libitm.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libitm.so
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libitm.so.1
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libitm.so.1.0.0
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libitm.spec
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libstdc++fs.a
+%dir %{_prefix}/libexec/gcc/ppu
+%dir %{_prefix}/libexec/gcc/ppu/%{version}
+%{_prefix}/libexec/gcc/ppu/%{version}/cc1plus
+%ifarch x86_64
+%dir %{_prefix}/man
+%dir %{_prefix}/man/man1
+%endif
+%{_prefix}/man/man1/ppu-g++.1
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/__init__.py
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/v6/__init__.py
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/v6/printers.py
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/v6/xmethods.py
-
-%if 0
-%files -n ppu-gcc-fortran
-%defattr(-,root,root)
-%dir %{_prefix}
-%dir %{_prefix}/bin
-%dir %{_mandir}
-%dir %{_mandir}/man1
-%{_prefix}/bin/ppu-gfortran
-%{_mandir}/man1/ppu-gfortran.1*
-%dir %{_prefix}/libexec
-%dir %{_prefix}/libexec/gcc
-%dir %{_prefix}/libexec/gcc/powerpc64-linux-gnu
-%dir %{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/f951
-%dir %{_prefix}/lib
-%dir %{_prefix}/lib/gcc
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgfortran.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/ISO_Fortran_binding.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libcaf_single.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgfortran.spec
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgfortran.so*
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/ieee_arithmetic.mod
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/ieee_exceptions.mod
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/ieee_features.mod
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/omp_lib.f90
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/omp_lib.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/omp_lib.mod
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/omp_lib_kinds.mod
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/openacc.f90
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/openacc.mod
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/openacc_kinds.mod
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/finclude/openacc_lib.h
-
-# gcc-gnat is currently broken
-%if 0
-%files -n ppu-gcc-gnat
-%defattr(-,root,root)
-%dir %{_prefix}
-%dir %{_prefix}/bin
-%{_prefix}/bin/ppu-gnatprep
-%{_prefix}/bin/ppu-gnatchop
-%{_prefix}/bin/ppu-gnatbind
-%{_prefix}/bin/ppu-gnat
-%{_prefix}/bin/ppu-gnatkr
-%{_prefix}/bin/ppu-gnatls
-%{_prefix}/bin/ppu-gnatclean
-%{_prefix}/bin/ppu-gnatmake
-%{_prefix}/bin/ppu-gnatname
-%{_prefix}/bin/ppu-gnatfind
-%{_prefix}/bin/ppu-gnatxref
-%{_prefix}/bin/ppu-gnatlink
-%dir %{_prefix}/lib
-%dir %{_prefix}/lib/gcc
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/adalib/*
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/adainclude/*.ads
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/adainclude/*.adb
-%dir %{_prefix}/libexec
-%dir %{_prefix}/libexec/gcc
-%dir %{_prefix}/libexec/gcc/powerpc64-linux-gnu
-%dir %{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/gnat1
-%endif
-
-%files -n ppu-gcc-testsuite
-%defattr(-,root,root)
-%dir %{_prefix}
-%dir %{_prefix}/bin
-%dir %{_prefix}/share
-%{_prefix}/bin/ppu-gcc-runtests
-%{_prefix}/share/ppu-gcc-testsuite
-%endif
 
 
 %changelog

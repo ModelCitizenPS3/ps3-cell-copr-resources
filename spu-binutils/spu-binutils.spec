@@ -6,6 +6,8 @@
 %undefine _annotated_build
 %undefine _auto_set_build_flags
 
+%define _build_id_links none
+
 Summary:        GNU binary utilities for the Cell/B.E. SPU
 Name:           spu-binutils
 Version:        2.32

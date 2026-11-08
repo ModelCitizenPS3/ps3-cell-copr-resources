@@ -6,6 +6,8 @@
 %undefine _annotated_build
 %undefine _auto_set_build_flags
 
+%define _build_id_links none
+
 Summary:        GNU binary utilities for the Cell/B.E. PPU
 Name:           ppu-binutils
 Version:        2.32
@@ -82,8 +84,10 @@ mv %{buildroot}%{_prefix}/include %{buildroot}%{_prefix}/powerpc64-linux
 
 %files
 %defattr(-,root,root)
+%ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
+%endif
 %{_prefix}/bin/ppu-addr2line
 %{_prefix}/bin/ppu-ar
 %{_prefix}/bin/ppu-as
