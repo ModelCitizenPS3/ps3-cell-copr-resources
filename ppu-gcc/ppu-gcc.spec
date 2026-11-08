@@ -7,7 +7,10 @@
 %undefine _annotated_build
 %undefine _auto_set_build_flags
 
-%global _missing_build_ids_terminate_build 0
+%global debug_package %{nil}
+%global _build_id_links none
+%global __strip /bin/true
+%global __os_install_post %{nil}
 
 Name:           ppu-gcc
 Version:        9.5.0
@@ -142,7 +145,8 @@ LDFLAGS= ../configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir
 	--target=ppu \
     --disable-libssp \
     --disable-multilib \
-    --with-multiliib-list=m64
+    --with-multiliib-list=m64 \
+    --disable-libsanitizer
 make -j1
 popd
 
@@ -254,91 +258,90 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 %{_prefix}/bin/ppu-gcc
 %{_prefix}/bin/ppu-gcov
 %{_prefix}/bin/ppu-cpp
-%dir %{_prefix}/lib
-%dir %{_prefix}/lib/gcc
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stddef.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stdarg.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/varargs.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/float.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stdbool.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/iso646.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/unwind.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/vec_types.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/*crt*.o
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgcc.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgcov.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgcc_*.a
+%dir %{_prefix}/lib64
+%dir %{_prefix}/lib64/gcc
+%dir %{_prefix}/lib64/gcc/ppu
+%dir %{_prefix}/lib64/gcc/ppu/%{version}
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/include
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stddef.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdarg.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/varargs.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/float.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdbool.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/iso646.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/unwind.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/vec_types.h
+%{_prefix}/lib64/gcc/ppu/%{version}/*crt*.o
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcc.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcov.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcc_*.a
 %{_prefix}/lib64/libcc1.so
 %{_prefix}/lib64/libcc1.so.0
 %{_prefix}/lib64/libcc1.so.0.0.0
-%dir %{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/plugin
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/plugin/*
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/plugin
+%{_prefix}/lib64/gcc/ppu/%{version}/plugin/*
 %{_mandir}/man1/ppu-gcc.1*
 %{_mandir}/man1/ppu-gcov.1*
 %{_mandir}/man1/ppu-cpp.1*
 %dir %{_prefix}/libexec
 %dir %{_prefix}/libexec/gcc
-%dir %{_prefix}/libexec/gcc/powerpc64-linux-gnu
-%dir %{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/cc1
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/collect2
+%dir %{_prefix}/libexec/gcc/ppu
+%dir %{_prefix}/libexec/gcc/ppu/%{version}
+%{_prefix}/libexec/gcc/ppu/%{version}/cc1
+%{_prefix}/libexec/gcc/ppu/%{version}/collect2
 %{_prefix}/bin/ppu-gcc-ar
 %{_prefix}/bin/ppu-gcc-nm
 %{_prefix}/bin/ppu-gcc-ranlib
 %{_prefix}/bin/ppu-gcov-dump
 %{_prefix}/bin/ppu-gcov-tool
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include-fixed/limits.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include-fixed/syslimits.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/ppc-asm.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/altivec.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/si2vmx.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/spu2vmx.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/ppu_intrinsics.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include-fixed/README
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgcc_s*
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include-fixed/pthread.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/amo.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/bmi2intrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/bmiintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/emmintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/htmintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/htmxlintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/mm_malloc.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/mmintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/omp.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/openacc.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/pmmintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/smmintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/tmmintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/xmmintrin.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libatomic.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libatomic.so
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libatomic.so.1
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libatomic.so.1.2.0
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgomp.a
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgomp.so
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgomp.so.1
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgomp.so.1.0.0
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgomp.spec
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/x86intrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/limits.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/syslimits.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/ppc-asm.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/altivec.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/si2vmx.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/spu2vmx.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/ppu_intrinsics.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/README
+%{_prefix}/lib64/gcc/ppu/%{version}/libgcc_s*
+%{_prefix}/lib64/gcc/ppu/%{version}/include/amo.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/bmi2intrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/bmiintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/emmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/htmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/htmxlintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/mm_malloc.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/mmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/omp.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/openacc.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/pmmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/smmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/tmmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/xmmintrin.h
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so.1
+%{_prefix}/lib64/gcc/ppu/%{version}/libatomic.so.1.2.0
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so.1
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.so.1.0.0
+%{_prefix}/lib64/gcc/ppu/%{version}/libgomp.spec
+%{_prefix}/lib64/gcc/ppu/%{version}/include/x86intrin.h
 %{_prefix}/man/man1/ppu-gcov-dump.1
 %{_prefix}/man/man1/ppu-gcov-tool.1
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/gcov.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stdalign.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stdatomic.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stdfix.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stdint-gcc.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stdint.h
-%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/include/stdnoreturn.h
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/liblto_plugin.so
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/liblto_plugin.so.0
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/liblto_plugin.so.0.0.0
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/lto-wrapper
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/lto1
-%{_prefix}/libexec/gcc/powerpc64-linux-gnu/%{version}/plugin/gengtype
+%{_prefix}/lib64/gcc/ppu/%{version}/include/gcov.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdalign.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdatomic.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdfix.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdint-gcc.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdint.h
+%{_prefix}/lib64/gcc/ppu/%{version}/include/stdnoreturn.h
+%{_prefix}/libexec/gcc/ppu/%{version}/liblto_plugin.so
+%{_prefix}/libexec/gcc/ppu/%{version}/liblto_plugin.so.0
+%{_prefix}/libexec/gcc/ppu/%{version}/liblto_plugin.so.0.0.0
+%{_prefix}/libexec/gcc/ppu/%{version}/lto-wrapper
+%{_prefix}/libexec/gcc/ppu/%{version}/lto1
+%{_prefix}/libexec/gcc/ppu/%{version}/plugin/gengtype
 
 %files -n ppu-gcc-c++
 %defattr(-,root,root)
