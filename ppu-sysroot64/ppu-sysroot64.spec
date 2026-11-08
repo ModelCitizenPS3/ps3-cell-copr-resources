@@ -20,7 +20,7 @@
 
 Name:           ppu-sysroot64
 Version:        %{glibc_ver}
-Release:        1.CELL
+Release:        2.CELL
 Summary:        Cross sysroot (glibc + kernel headers) for the Cell PPU, 64-bit
 License:        LGPLv2+ and LGPLv2+ with exceptions and GPLv2+ and BSD and Inner-Net and ISC and Public Domain and GFDL
 URL:            https://www.gnu.org/software/libc/
@@ -31,8 +31,9 @@ Source3:        gcc-9.5.0-add-ppu-target.patch
 Source4:        gcc-9.5.0-format-security-syntax-fix.patch
 ExclusiveArch:  x86_64
 
-BuildRequires:  ppu-binutils, python3, texinfo, rsync
+BuildRequires:  ppu-binutils
 BuildRequires:  gcc, gcc-c++, cpp, make, bison, flex, gawk, sed, perl-interpreter
+BuildRequires:  texinfo, rsync
 BuildRequires:  gmp-devel, mpfr-devel, libmpc-devel
 
 %description
@@ -57,7 +58,6 @@ TOP=$PWD
 BOOT=$TOP/bootstrap
 STAGE=$TOP/kernel-headers
 P=%{tool_prefix}
-export PATH=/opt/cell/toolchain/bin:$PATH
 
 # --- 1. Kernel headers ------------------------------------------------------
 make -C linux-%{kver} ARCH=powerpc headers_install INSTALL_HDR_PATH=$STAGE
@@ -96,9 +96,9 @@ mkdir build-glibc && pushd build-glibc
 
 # ppc64 big-endian glibc uses /lib64 and /usr/lib64.
 cat > configparms <<EOF
-slibdir=/lib64
-rtlddir=/lib64
-libdir=/usr/lib64
+slibdir=/lib
+rtlddir=/lib
+libdir=/usr/lib
 BUILD_CC=gcc
 EOF
 
@@ -149,6 +149,10 @@ find %{buildroot}%{sysroot} -type f \( -name '*.a' -o -name '*.o' -o -name '*.so
 %{sysroot}
 
 %changelog
-* Sat Nov 07 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.32-1
+* Sun Nov 8 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.32-2
+- Changed startfiles install directory from /opt/cell/sysroot/usr/lib64
+  to /opt/cell/sysroot/usr/lib
+
+* Sat Nov 7 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.32-1
 - Initial build
 

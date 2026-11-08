@@ -1,3 +1,14 @@
+# banish all Fedora/RedHat compile flags from the build
+%undefine optflags
+%undefine build_cflags
+%undefine build_cxxflags
+%undefine build_ldflags
+%undefine _hardened_build
+%undefine _annotated_build
+%undefine _auto_set_build_flags
+
+%global _missing_build_ids_terminate_build 0
+
 Name:           ppu-gcc
 Version:        9.5.0
 Release:        1.CELL
@@ -113,7 +124,7 @@ CC="ppu-gcc -m64"
 CC="gcc -m64"
 %endif
 #CC="$CC" CFLAGS="$PPU_OPT_FLAGS" CXXFLAGS="$PPU_OPT_FLAGS" XCFLAGS="$OPT_FLAGS" TCFLAGS="$PPU_OPT_FLAGS" \
-../configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir} --infodir=%{_infodir} \
+LDFLAGS= ../configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir} --infodir=%{_infodir} \
 	%{?with_sysroot} \
 	--with-as=`which ppu-as` \
 	--with-ld=`which ppu-ld` \
@@ -158,7 +169,7 @@ rm -f %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libgfortran.
 rm -f %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/mea64/libcaf_single.la
 rm -f %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/mea64/libgfortran.la
 rm -f %{buildroot}%{_prefix}/lib64/libcc1.la
-mv %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/lib64/* %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/
+mv %{buildroot}%{_prefix}/lib64/gcc/ppu/lib64/* %{buildroot}%{_prefix}/lib64/gcc/ppu/%{version}/
 rm -rf %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/lib
 rm -rf %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/lib64
 
