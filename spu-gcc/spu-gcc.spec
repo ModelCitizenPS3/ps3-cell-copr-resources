@@ -5,6 +5,7 @@
 %undefine build_ldflags
 %undefine _hardened_build
 %undefine _annotated_build
+%undefine _auto_set_build_flags
 
 # dwz runs slow as hell on the PS3
 %ifarch ppc64
@@ -13,7 +14,7 @@
 
 Name:           spu-gcc
 Version:        9.5.0
-Release:        3.CELL
+Release:        4.CELL
 Summary:        GNU Compiler Collection for Cell/B.E. SPU
 License:        GPL
 Group:          Cell Development Tools
@@ -56,6 +57,16 @@ AutoReq:    yes
 %description -n spu-gcc-c++
 GNU Compiler Collection C++ compiler for Cell Broadband Engine.
 
+%package -n spu-gcc-fortran
+Summary:    Fortran support for spu-gcc
+Group:      Cell Development Tools
+Requires:   spu-gcc = %{version}-%{release}
+AutoProv:   no
+AutoReq:    yes
+
+%description -n spu-gcc-fortran
+GNU Compiler Collection Fortran compiler for Cell Broadband Engine.
+
 
 %prep
 %setup -c -q
@@ -84,7 +95,7 @@ CXXFLAGS="-O2 -g %{mcpu_mtune} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
 LDFLAGS= \
 ../gcc-%{version}/configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir} \
     --infodir=%{_infodir} %{?with_sysroot} --disable-shared --disable-threads --disable-checking \
-    --with-headers --with-system-zlib --with-newlib --enable-languages=c,c++ --disable-nls \
+    --with-headers --with-system-zlib --with-newlib --enable-languages=c,c++,fortran --disable-nls \
     --enable-version-specific-runtime-libs --disable-libssp --program-prefix=spu- \
     --disable-hosted-libstdcxx --enable-cxx-flags='-fno-exceptions' --target=spu \
     --disable-werror --disable-libcc1 --enable-obsolete 
@@ -241,8 +252,38 @@ rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 %dir %{_prefix}/lib/gcc/spu/%{version}/mea64
 %{_prefix}/lib/gcc/spu/%{version}/mea64/libsupc++.a
 
+%files -n spu-gcc-fortran
+%defattr(-,root,root)
+%ifarch x86_64
+%dir %{_prefix}
+%dir %{_prefix}/bin
+%dir %{_mandir}
+%dir %{_mandir}/man1
+%dir %{_prefix}/lib
+%endif
+%{_prefix}/bin/spu-gfortran
+%{_mandir}/man1/spu-gfortran.1*
+%dir %{_prefix}/libexec
+%dir %{_prefix}/libexec/gcc
+%dir %{_prefix}/libexec/gcc/spu
+%dir %{_prefix}/libexec/gcc/spu/%{version}
+%{_prefix}/libexec/gcc/spu/%{version}/f951
+%dir %{_prefix}/lib/gcc
+%dir %{_prefix}/lib/gcc/spu
+%dir %{_prefix}/lib/gcc/spu/%{version}
+%{_prefix}/lib/gcc/spu/%{version}/libgfortran.a
+%dir %{_prefix}/lib/gcc/spu/%{version}/mea64
+%{_prefix}/lib/gcc/spu/%{version}/mea64/libgfortran.a
+%{_prefix}/lib/gcc/spu/%{version}/libcaf_single.a
+%{_prefix}/lib/gcc/spu/%{version}/libgfortran.spec
+%{_prefix}/lib/gcc/spu/%{version}/mea64/libcaf_single.a
+%{_prefix}/lib/gcc/spu/%{version}/mea64/libgfortran.spec
+
 
 %changelog
+* Sat Nov 7 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-4
+- Added fortran to the build
+
 * Sat Nov 7 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-3
 - Removed newlib from build and created as a separate package
 
