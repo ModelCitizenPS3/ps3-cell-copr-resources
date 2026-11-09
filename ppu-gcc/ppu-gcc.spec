@@ -86,33 +86,36 @@ rm -rf obj-powerpc64-linux-gnu
 mkdir -p obj-powerpc64-linux-gnu
 pushd obj-powerpc64-linux-gnu
 
-#PPU_OPT_FLAGS="-O2 -g -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 %ifarch ppc64
 CC="ppu-gcc -m64"
 %else
 CC="gcc -m64"
 %endif
-#CC="$CC" CFLAGS="$PPU_OPT_FLAGS" CXXFLAGS="$PPU_OPT_FLAGS" XCFLAGS="$OPT_FLAGS" TCFLAGS="$PPU_OPT_FLAGS" \
 LDFLAGS= \
 ../configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir} --infodir=%{_infodir} \
 	%{?with_sysroot} \
 	--with-as=%{with_as} \
 	--with-ld=%{with_ld} \
-	--enable-threads --with-system-zlib --disable-checking \
-	--enable-__cxa_atexit --disable-libunwind-exceptions \
-	--enable-languages=c,c++ --disable-nls \
+	--enable-threads \
+    --with-system-zlib \
+    --disable-checking \
+	--enable-__cxa_atexit \
+    --disable-libunwind-exceptions \
+	--enable-languages=c,c++ \
+    --disable-nls \
 	--enable-clocale=gnu \
 	--enable-version-specific-runtime-libs \
-	--with-long-double-128 --program-prefix=ppu- \
+	--with-long-double-128 \
+    --program-prefix=ppu- \
 	--disable-bootstrap \
 %ifarch ppc64
 	--host=ppu \
 %endif
 	--build=%{build_arch} \
 	--target=ppu \
-    --disable-libssp \
     --disable-multilib \
     --with-multiliib-list=m64 \
+    --disable-libssp \
     --disable-libsanitizer
 make -j1
 popd
@@ -182,10 +185,11 @@ chmod 755 %{buildroot}%{_bindir}/ppu-c?9
 
 rm -rf %{buildroot}%{_infodir}
 rm -rf %{buildroot}%{_mandir}/man7
-rm -f %{buildroot}%{_libdir}/gcc/powerpc64-linux-gnu/%{version}/include-fixed/README
-rm -f %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/libsupc++.la
-rm -f %{buildroot}%{_prefix}/lib/gcc/powerpc64-linux-gnu/%{version}/mea64/libsupc++.la
+rm -f %{buildroot}%{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/README
+rm -f %{buildroot}%{_prefix}/lib64/gcc/ppu/%{version}/libsupc++.la
+rm -f %{buildroot}%{_prefix}/lib64/gcc/ppu/%{version}/mea64/libsupc++.la
 rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
+rm -f %{buildroot}/usr/bin/ppu-ppu-*
 
 
 %check
@@ -196,6 +200,23 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 %ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
+%dir %{_prefix}/lib64
+%dir %{_prefix}/libexec
+%dir %{_prefix}/man
+%dir %{_prefix}/man/man1
+%{_prefix}/man/man1/ppu-cpp.1
+%{_prefix}/man/man1/ppu-gcc.1
+%{_prefix}/man/man1/ppu-gcov.1
+%{_prefix}/man/man1/ppu-gcov-dump.1
+%{_prefix}/man/man1/ppu-gcov-tool.1
+%endif
+%ifarch ppc64
+%{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/pthread.h
+%{_prefix}/share/man/man1/ppu-cpp.1.gz
+%{_prefix}/share/man/man1/ppu-gcc.1.gz
+%{_prefix}/share/man/man1/ppu-gcov-dump.1.gz
+%{_prefix}/share/man/man1/ppu-gcov-tool.1.gz
+%{_prefix}/share/man/man1/ppu-gcov.1.gz
 %endif
 %{_prefix}/bin/ppu-c89
 %{_prefix}/bin/ppu-c99
@@ -208,9 +229,6 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 %{_prefix}/bin/ppu-gcc-ranlib
 %{_prefix}/bin/ppu-gcov-dump
 %{_prefix}/bin/ppu-gcov-tool
-%ifarch x86_64
-%dir %{_prefix}/lib64
-%endif
 %dir %{_prefix}/lib64/gcc
 %dir %{_prefix}/lib64/gcc/ppu
 %dir %{_prefix}/lib64/gcc/ppu/%{version}
@@ -222,7 +240,6 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 %{_prefix}/lib64/gcc/ppu/%{version}/ecrti.o
 %{_prefix}/lib64/gcc/ppu/%{version}/ecrtn.o
 %dir %{_prefix}/lib64/gcc/ppu/%{version}/include-fixed
-%{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/README
 %{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/limits.h
 %{_prefix}/lib64/gcc/ppu/%{version}/include-fixed/syslimits.h
 %dir %{_prefix}/lib64/gcc/ppu/%{version}/include
@@ -291,9 +308,6 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 %{_prefix}/lib64/libcc1.so
 %{_prefix}/lib64/libcc1.so.0
 %{_prefix}/lib64/libcc1.so.0.0.0
-%ifarch x86_64
-%dir %{_prefix}/libexec
-%endif
 %dir %{_prefix}/libexec/gcc
 %dir %{_prefix}/libexec/gcc/ppu
 %dir %{_prefix}/libexec/gcc/ppu/%{version}
@@ -312,27 +326,21 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 %{_prefix}/libexec/gcc/ppu/%{version}/lto1
 %dir %{_prefix}/libexec/gcc/ppu/%{version}/plugin
 %{_prefix}/libexec/gcc/ppu/%{version}/plugin/gengtype
-%ifarch x86_64
-%dir %{_prefix}/man
-%dir %{_prefix}/man/man1
-%endif
-%{_prefix}/man/man1/ppu-cpp.1
-%{_prefix}/man/man1/ppu-gcc.1
-%{_prefix}/man/man1/ppu-gcov.1
-%{_prefix}/man/man1/ppu-gcov-dump.1
-%{_prefix}/man/man1/ppu-gcov-tool.1
 
 %files -n ppu-gcc-c++
 %defattr(-,root,root)
 %ifarch x86_64
 %dir %{_prefix}
 %dir %{_prefix}/bin
+%dir %{_prefix}/lib64
+%dir %{_prefix}/libexec
+%{_prefix}/man/man1/ppu-g++.1*
+%endif
+%ifarch ppc64
+%{_prefix}/share/man/man1/ppu-g++.1*
 %endif
 %{_prefix}/bin/ppu-c++
 %{_prefix}/bin/ppu-g++
-%ifarch x86_64
-%dir %{_prefix}/lib64
-%endif
 %dir %{_prefix}/lib64/gcc
 %dir %{_prefix}/lib64/gcc/ppu
 %dir %{_prefix}/lib64/gcc/ppu/%{version}
@@ -354,19 +362,10 @@ rm -f %{buildroot}%{_datadir}/ppu-gcc-testsuite/ada/acats/run_all.sh
 %{_prefix}/lib64/gcc/ppu/%{version}/libstdc++.so.6.0.28-gdb.py
 %{_prefix}/lib64/gcc/ppu/%{version}/libstdc++fs.a
 %{_prefix}/lib64/gcc/ppu/%{version}/libstdc++fs.la
-%{_prefix}/lib64/gcc/ppu/%{version}/libsupc++.la
-%ifarch x86_64
-%dir %{_prefix}/libexec
-%endif
 %dir %{_prefix}/libexec/gcc
 %dir %{_prefix}/libexec/gcc/ppu
 %dir %{_prefix}/libexec/gcc/ppu/%{version}
 %{_prefix}/libexec/gcc/ppu/%{version}/cc1plus
-%ifarch x86_64
-%dir %{_prefix}/man
-%dir %{_prefix}/man/man1
-%endif
-%{_prefix}/man/man1/ppu-g++.1
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/__init__.py
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/v6/__init__.py
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/v6/printers.py

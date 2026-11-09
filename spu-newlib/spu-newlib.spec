@@ -4,6 +4,8 @@
 %undefine build_ldflags
 %undefine _hardened_build
 %undefine _annotated_build
+%undefine _auto_set_build_flags
+
 # newlib/libgloss contain SPU ELF objects: host strip/debuginfo/brp scripts must not touch them
 %global debug_package %{nil}
 %global __os_install_post %{nil}
@@ -24,7 +26,6 @@ ExclusiveArch:  ppc64 x86_64
 
 BuildRequires:  spu-binutils, gcc, cpp, gcc-c++, make, texinfo
 BuildRequires:  gmp-devel, mpfr-devel, libmpc-devel, isl-devel
-BuildRequires:  spu-gcc, spu-gcc-c++
 Requires:       gmp, mpfr, libmpc, isl
 Obsoletes:      spu-gcc <= 9.5.0-2.CELL
 Obsoletes:      spu-gcc-c++ <= 9.5.0-2.CELL
@@ -50,8 +51,8 @@ CXX=g++ \
 CFLAGS="-O2 -g" \
 CXXFLAGS="-O2 -g" \
 LDFLAGS= \
-CC_FOR_TARGET=%{_prefix}/bin/spu-gcc \
-CXX_FOR_TARGET=%{_prefix}/bin/spu-g++ \
+#CC_FOR_TARGET=%{_prefix}/bin/spu-gcc \
+#CXX_FOR_TARGET=%{_prefix}/bin/spu-g++ \
 AR_FOR_TARGET=%{_prefix}/bin/spu-ar \
 AS_FOR_TARGET=%{_prefix}/bin/spu-as \
 LD_FOR_TARGET=%{_prefix}/bin/spu-ld \
@@ -83,5 +84,5 @@ make -C build DESTDIR=%{buildroot} -j1 install
 
 %changelog
 * Sat Nov 7 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 2.5.0-1
-- Initial build - https://ps3linux.net
+- Initial build
 
