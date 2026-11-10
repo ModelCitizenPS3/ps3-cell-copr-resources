@@ -68,6 +68,10 @@ ln -s ../newlib-%{version}/libgloss libgloss
     cd ../
     mkdir -p gcc-bootstrap
     cd gcc-bootstrap
+    AR_FOR_TARGET=%{_prefix}/bin/spu-ar \
+    AS_FOR_TARGET=%{_prefix}/bin/spu-as \
+    LD_FOR_TARGET=%{_prefix}/bin/spu-ld \
+    RANLIB_FOR_TARGET=%{_prefix}/bin/spu-ranlib \
     ../gcc-9.5.0/configure \
         --target=spu \
         --prefix=/usr \
