@@ -6,7 +6,7 @@ Release:        1%{?dist}
 Summary:        Compatibility Tk 8.5 runtime library
 License:        TCL
 URL:            https://sourceforge.net/projects/tktoolkit/
-Source0:        http://prdownloads.sourceforge.net/tcl/tk%{version}-src.tar.gz
+Source0:        https://prdownloads.sourceforge.net/tcl/tk%{version}-src.tar.gz
 Patch1:         tk8.5.19-remove-strrchr-declaration.patch
 ExclusiveArch:  x86_64
 

@@ -6,7 +6,7 @@ Version:        8.5.19
 Release:        1%{?dist}
 Summary:        Compatibility Tcl 8.5 runtime library
 License:        TCL
-URL:            http://tcl.sourceforge.net/
+URL:            https://tcl.sourceforge.net/
 Source0:        https://downloads.sourceforge.net/tcl/tcl%{version}-src.tar.gz
 ExclusiveArch:  x86_64
 
