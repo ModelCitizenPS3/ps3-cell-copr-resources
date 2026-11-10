@@ -14,7 +14,7 @@
 
 Name:           spu-gcc
 Version:        9.5.0
-Release:        4.CELL
+Release:        1.CELL
 Summary:        GNU Compiler Collection for Cell/B.E. SPU
 License:        GPL
 Group:          Cell Development Tools
@@ -281,15 +281,6 @@ rm -f %{buildroot}%{_prefix}/bin/spu-gcov-{dump,tool}
 
 
 %changelog
-* Sat Nov 7 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-4
-- Added fortran to the build
-
-* Sat Nov 7 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-3
-- Removed newlib from build and created as a separate package
-
-* Fri Nov 6 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-2
-- Added ppc64 to ExclusiveArch tag (for PS3LINUX)
-
-* Mon Nov 2 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-1
+* Mon Nov 9 2026 The Model Citizen <model.citizen.ps3@gmail.com> - 9.5.0-1
 - Initial build
 
