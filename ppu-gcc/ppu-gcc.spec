@@ -11,6 +11,9 @@
 %global __strip /bin/true
 %global __os_install_post %{nil}
 
+# Prevent RPM from extracting requirements from the target toolchain paths
+%global __requires_exclude_from ^/opt/cell/toolchain/.*$
+
 Name:           ppu-gcc
 Version:        9.5.0
 Release:        1.CELL
