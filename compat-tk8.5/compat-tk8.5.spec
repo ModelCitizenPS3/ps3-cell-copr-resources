@@ -13,6 +13,7 @@ ExclusiveArch:  x86_64
 BuildRequires:  gcc
 BuildRequires:  make
 BuildRequires:  zlib-devel
+BuildRequires:  libX11-devel
 BuildRequires:  compat-tcl8.5
 Requires:       compat-tcl8.5
 
