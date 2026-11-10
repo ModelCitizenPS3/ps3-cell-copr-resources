@@ -54,7 +54,6 @@ rm -rf %{buildroot}%{_bindir}
 rm -rf %{buildroot}%{_prefix}/man
 rm -rf %{buildroot}%{_prefix}/lib
 rm -rf %{buildroot}%{_libdir}/pkgconfig
-rm -f  %{buildroot}%{_libdir}/libtclstub8.5.a
 
 mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d
 echo "%{_libdir}" > %{buildroot}%{_sysconfdir}/ld.so.conf.d/%{name}-%{_arch}.conf

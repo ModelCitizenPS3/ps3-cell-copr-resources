@@ -33,17 +33,16 @@ so it can be installed alongside the current Tk package.
 %build
 cd unix
 CC="gcc -m64" \
-CFLAGS="-O2 -g -mcpu=x86_64 -mtune=generic -std=gnu89 -D_GNU_SOURCE" \
+CFLAGS="-O2 -g -mcpu=x86_64 -mtune=generic -std=gnu89 -D_GNU_SOURCE -I/usr/lib64/tcltk/include" \
 LDFLAGS=-L/usr/lib64/tcltk \
-CPPFLAGS=-I/usr/lib64/tcltk/include \
 ./configure  \
     --libdir=%{_libdir} \
     --enable-threads \
     --enable-shared \
-    --enable-64biti \
+    --enable-64bit \
     --with-tcl=/usr/lib64/tcltk \
     --with-x
-make -j1 CFLAGS="-O2 -g -mcpu=x86_64 -mtune=generic -std=gnu89 -D_GNU_SOURCE"
+make -j1 CC="gcc -m64" CFLAGS="-O2 -g -mcpu=x86_64 -mtune=generic -std=gnu89 -D_GNU_SOURCE -I/usr/lib64/tcltk/include" LDFLAGS=-L/usr/lib64/tcltk
 
 
 %check
