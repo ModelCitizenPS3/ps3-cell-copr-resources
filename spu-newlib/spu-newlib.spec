@@ -27,8 +27,6 @@ ExclusiveArch:  ppc64 x86_64
 BuildRequires:  spu-binutils, gcc, cpp, gcc-c++, make, texinfo
 BuildRequires:  gmp-devel, mpfr-devel, libmpc-devel, isl-devel
 Requires:       gmp, mpfr, libmpc, isl
-Obsoletes:      spu-gcc <= 9.5.0-2.CELL
-Obsoletes:      spu-gcc-c++ <= 9.5.0-2.CELL
 AutoReq:        no
 AutoProv:       no
 
@@ -51,8 +49,8 @@ CXX=g++ \
 CFLAGS="-O2 -g" \
 CXXFLAGS="-O2 -g" \
 LDFLAGS= \
-#CC_FOR_TARGET=%{_prefix}/bin/spu-gcc \
-#CXX_FOR_TARGET=%{_prefix}/bin/spu-g++ \
+CC_FOR_TARGET=%{_prefix}/bin/spu-gcc \
+CXX_FOR_TARGET=%{_prefix}/bin/spu-g++ \
 AR_FOR_TARGET=%{_prefix}/bin/spu-ar \
 AS_FOR_TARGET=%{_prefix}/bin/spu-as \
 LD_FOR_TARGET=%{_prefix}/bin/spu-ld \
