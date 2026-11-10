@@ -45,9 +45,6 @@ LDFLAGS=-L/usr/lib64/tcltk \
 make -j1 CC="gcc -m64" CFLAGS="-O2 -g -mcpu=x86_64 -mtune=generic -std=gnu89 -D_GNU_SOURCE -I/usr/lib64/tcltk/include" LDFLAGS=-L/usr/lib64/tcltk
 
 
-%check
-
-
 %install
 rm -rf %{buildroot}
 cd unix
@@ -56,11 +53,20 @@ make INSTALL_ROOT=%{buildroot} -j1 install
 # Keep this a runtime-only compat package: drop everything that would
 # conflict with, or duplicate, the current tcl/tcl-devel packages.
 rm -rf %{buildroot}%{_bindir}
+rm -rf %{buildroot}%{_includedir}
 rm -rf %{buildroot}%{_libdir}/pkgconfig
+rm -f %{buildroot}%{_libdir}/libtkstub8.5.a
+rm -rf %{buildroot}%{_libdir}/tk8.5
+rm -f %{buildroot}%{_libdir}/tkConfig.sh
+rm -rf %{buildroot}%{_prefix}/lib
+rm -rf %{buildroot}%{_prefix}/man
 
 # Make the dynamic linker find libtcl8.5.so in the non-standard directory
 mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d
 echo "%{_libdir}" > %{buildroot}%{_sysconfdir}/ld.so.conf.d/%{name}-%{_arch}.conf
+
+
+%check
 
 
 %post -p /sbin/ldconfig
