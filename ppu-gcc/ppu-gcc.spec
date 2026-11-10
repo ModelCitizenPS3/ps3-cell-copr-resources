@@ -63,6 +63,16 @@ AutoReq:    yes
 %description -n ppu-gcc-c++
 GNU Compiler Collection C++ compiler for Cell Broadband Engine.
 
+%package -n ppu-gcc-fortran
+Summary:    Fortran support for %{package_prefix}-gcc
+Group:      Cell Development Tools
+Requires:   ppu-gcc = %{version}-%{release}
+AutoProv:   no
+AutoReq:    yes
+
+%description -n ppu-gcc-fortran
+GNU Compiler Collection Fortran compiler for Cell Broadband Engine.
+
 
 %prep
 %setup -q -n gcc-%{version}
@@ -71,11 +81,6 @@ patch -p1 < %{PATCH2}
 
 
 %build
-%ifarch ppc64
-%define build_arch powerpc64-unknown-linux-gnu
-%define with_as /usr/bin/ppu-as
-%define with_ld /usr/bin/ppu-ld
-%endif
 %ifarch x86_64
 %define build_arch x86_64-unknown-linux-gnu
 %define with_as /opt/cell/toolchain/bin/ppu-as
@@ -84,18 +89,22 @@ export AR_FOR_TARGET=/opt/cell/toolchain/bin/ppu-ar
 export RANLIB_FOR_TARGET=/opt/cell/toolchain/bin/ppu-ranlib
 export NM_FOR_TARGET=/opt/cell/toolchain/bin/ppu-nm
 %endif
-
-rm -rf obj-powerpc64-linux-gnu
-mkdir -p obj-powerpc64-linux-gnu
-pushd obj-powerpc64-linux-gnu
-
 %ifarch ppc64
-CC="ppu-gcc -m64"
-%else
-CC="gcc -m64"
+%define build_arch powerpc64-unknown-linux-gnu
+%define with_as /usr/bin/ppu-as
+%define with_ld /usr/bin/ppu-ld
 %endif
-LDFLAGS= \
-../configure --prefix=%{_prefix} --libdir=%{_libdir} --mandir=%{_mandir} --infodir=%{_infodir} \
+
+rm -rf build
+mkdir -p build
+pushd build
+
+CC="gcc -m64" CXX="g++ -m64" LDFLAGS= \
+../configure \
+    --prefix=%{_prefix} \
+    --libdir=%{_libdir} \
+    --mandir=%{_mandir} \
+    --infodir=%{_infodir} \
 	%{?with_sysroot} \
 	--with-as=%{with_as} \
 	--with-ld=%{with_ld} \
@@ -104,7 +113,7 @@ LDFLAGS= \
     --disable-checking \
 	--enable-__cxa_atexit \
     --disable-libunwind-exceptions \
-	--enable-languages=c,c++ \
+	--enable-languages=c,c++,fortran \
     --disable-nls \
 	--enable-clocale=gnu \
 	--enable-version-specific-runtime-libs \
@@ -126,9 +135,12 @@ popd
 
 %install
 rm -rf %{buildroot}
-make -C obj-powerpc64-linux-gnu DESTDIR=%{buildroot} -j1 install
+pushd build
+make DESTDIR=%{buildroot} -j1 install
+popd
 
 ln -sf ppu-gcc %{buildroot}%{_prefix}/bin/ppu-cc
+
 rm -f %{buildroot}%{_prefix}/bin/vxaddr2line
 rm -f %{buildroot}%{_prefix}/bin/powerpc64-linux-gnu-ppu-*
 rm -f %{buildroot}%{_prefix}/bin/ppu-gcc-%{version}
@@ -373,6 +385,48 @@ rm -f %{buildroot}/usr/bin/ppu-ppu-*
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/v6/__init__.py
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/v6/printers.py
 %{_prefix}/share/gcc-%{version}/python/libstdcxx/v6/xmethods.py
+
+%files -n ppu-gcc-fortran
+%defattr(-,root,root)
+%ifarch x86_64
+%dir %{_prefix}
+%dir %{_prefix}/bin
+%dir %{_prefix}/lib64
+%dir %{_prefix}/libexec
+%dir %{_prefix}/man
+%dir %{_prefix}/man/man1
+%endif
+%{_prefix}/bin/ppu-gfortran
+%dir %{_prefix}/lib64/gcc
+%dir %{_prefix}/lib64/gcc/ppu
+%dir %{_prefix}/lib64/gcc/ppu/%{version}
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/finclude
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/ieee_arithmetic.mod
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/ieee_exceptions.mod
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/ieee_features.mod
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/omp_lib.f90
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/omp_lib.h
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/omp_lib.mod
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/omp_lib_kinds.mod
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/openacc.f90
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/openacc.mod
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/openacc_kinds.mod
+%{_prefix}/lib64/gcc/ppu/%{version}/finclude/openacc_lib.h
+%dir %{_prefix}/lib64/gcc/ppu/%{version}/include
+%{_prefix}/lib64/gcc/ppu/%{version}/include/ISO_Fortran_binding.h
+%{_prefix}/lib64/gcc/ppu/%{version}/libcaf_single.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libcaf_single.la
+%{_prefix}/lib64/gcc/ppu/%{version}/libgfortran.a
+%{_prefix}/lib64/gcc/ppu/%{version}/libgfortran.la
+%{_prefix}/lib64/gcc/ppu/%{version}/libgfortran.so
+%{_prefix}/lib64/gcc/ppu/%{version}/libgfortran.so.5
+%{_prefix}/lib64/gcc/ppu/%{version}/libgfortran.so.5.0.0
+%{_prefix}/lib64/gcc/ppu/%{version}/libgfortran.spec
+%dir %{_prefix}/libexec/gcc
+%dir %{_prefix}/libexec/gcc/ppu
+%dir %{_prefix}/libexec/gcc/ppu/%{version}
+%{_prefix}/libexec/gcc/ppu/%{version}/f951
+%{_prefix}/man/man1/ppu-gfortran.1*
 
 
 %changelog
