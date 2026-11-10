@@ -3,7 +3,7 @@
 
 Name:           compat-tcl8.5
 Version:        8.5.19
-Release:        1.CELL
+Release:        1%{?dist}
 Summary:        Compatibility Tcl 8.5 runtime library
 License:        TCL
 URL:            http://tcl.sourceforge.net/
@@ -18,8 +18,8 @@ BuildRequires:  zlib-devel
 This package provides the shared Tcl 8.5 runtime library (libtcl8.5.so) and
 its script library for binaries that were linked against Tcl 8.5.
 
-It is a runtime-only compatibility package: it ships no tclsh, no headers, no
-man pages and no development files, and everything lives under %{_libdir}
+It is a runtime-only compatibility package: it ships no tclsh, no man
+pages and no development files, and everything lives under %{_libdir}
 so it can be installed alongside the current tcl package.
 
 
@@ -50,17 +50,12 @@ rm -rf %{buildroot}
 cd unix
 make INSTALL_ROOT=%{buildroot} -j1 install install-private-headers
 
-# Keep this a runtime-only compat package: drop everything that would
-# conflict with, or duplicate, the current tcl/tcl-devel packages.
 rm -rf %{buildroot}%{_bindir}
 rm -rf %{buildroot}%{_prefix}/man
 rm -rf %{buildroot}%{_prefix}/lib
 rm -rf %{buildroot}%{_libdir}/pkgconfig
-rm -f  %{buildroot}%{_libdir}/tclConfig.sh
-rm -f  %{buildroot}%{_libdir}/tclooConfig.sh
 rm -f  %{buildroot}%{_libdir}/libtclstub8.5.a
 
-# Make the dynamic linker find libtcl8.5.so in the non-standard directory
 mkdir -p %{buildroot}%{_sysconfdir}/ld.so.conf.d
 echo "%{_libdir}" > %{buildroot}%{_sysconfdir}/ld.so.conf.d/%{name}-%{_arch}.conf
 
