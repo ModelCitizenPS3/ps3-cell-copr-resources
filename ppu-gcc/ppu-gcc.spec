@@ -12,7 +12,9 @@
 %global __os_install_post %{nil}
 
 # Prevent RPM from extracting requirements from the target toolchain paths
+%ifarch x86_64
 %global __requires_exclude_from ^/opt/cell/toolchain/.*$
+%endif
 
 Name:           ppu-gcc
 Version:        9.5.0
@@ -128,8 +130,9 @@ CC="gcc -m64" CXX="g++ -m64" LDFLAGS= \
     --disable-multilib \
     --with-multiliib-list=m64 \
     --disable-libssp \
-    --disable-libsanitizer
-make -j1
+    --disable-libsanitizer \
+    --disable-libcc1
+make -j2
 popd
 
 
@@ -320,9 +323,6 @@ rm -f %{buildroot}/usr/bin/ppu-ppu-*
 %{_prefix}/lib64/gcc/ppu/%{version}/libgomp.spec
 %dir %{_prefix}/lib64/gcc/ppu/%{version}/plugin
 %{_prefix}/lib64/gcc/ppu/%{version}/plugin/*
-%{_prefix}/lib64/libcc1.so
-%{_prefix}/lib64/libcc1.so.0
-%{_prefix}/lib64/libcc1.so.0.0.0
 %dir %{_prefix}/libexec/gcc
 %dir %{_prefix}/libexec/gcc/ppu
 %dir %{_prefix}/libexec/gcc/ppu/%{version}
@@ -395,6 +395,10 @@ rm -f %{buildroot}/usr/bin/ppu-ppu-*
 %dir %{_prefix}/libexec
 %dir %{_prefix}/man
 %dir %{_prefix}/man/man1
+%{_prefix}/man/man1/ppu-gfortran.1*
+%endif
+%ifarch ppc64
+%{_prefix}/share/man/man1/ppu-gfortran.1*
 %endif
 %{_prefix}/bin/ppu-gfortran
 %dir %{_prefix}/lib64/gcc
@@ -426,7 +430,6 @@ rm -f %{buildroot}/usr/bin/ppu-ppu-*
 %dir %{_prefix}/libexec/gcc/ppu
 %dir %{_prefix}/libexec/gcc/ppu/%{version}
 %{_prefix}/libexec/gcc/ppu/%{version}/f951
-%{_prefix}/man/man1/ppu-gfortran.1*
 
 
 %changelog
